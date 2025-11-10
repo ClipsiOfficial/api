@@ -1,14 +1,15 @@
 import type { ContentfulStatusCode } from "hono/utils/http-status";
-
 import type { Env } from "./env";
-
 import { OpenAPIHono } from "@hono/zod-openapi";
+import { Scalar } from "@scalar/hono-api-reference";
+import packageJson from "../package.json" assert { type: "json" };
+import hello from "./routes/helllo.route";
 
-const app = new OpenAPIHono<{ Bindings: Env }>();
+export function createRouter() {
+  return new OpenAPIHono<{ Bindings: Env }>({ strict: false });
+}
 
-app.get("/", (c) => {
-  return c.text("Hello Hono!");
-});
+const app = createRouter();
 
 app.notFound((c) => {
   return c.json({
@@ -32,7 +33,29 @@ app.onError((err, c) => {
     },
     statusCode,
   );
-},
-);
+});
+
+app.doc("/docs", {
+  openapi: "3.0.0",
+  info: {
+    title: "Clipsi API",
+    version: packageJson.version,
+    description: "API for Clipsi web application",
+  },
+});
+
+app.get("/", Scalar({
+  url: "/docs",
+  theme: "moon",
+  layout: "classic",
+}));
+
+const routes = [
+  hello,
+];
+
+routes.forEach((router) => {
+  app.route("/", router);
+});
 
 export default app;
