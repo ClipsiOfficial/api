@@ -14,6 +14,9 @@ importers:
       drizzle-orm:
         specifier: ^0.44.7
         version: 0.44.7(@cloudflare/workers-types@4.20251109.0)
+      drizzle-zod:
+        specifier: ^0.8.3
+        version: 0.8.3(drizzle-orm@0.44.7(@cloudflare/workers-types@4.20251109.0))(zod@4.1.12)
       hono:
         specifier: ^4.10.4
         version: 4.10.4
@@ -665,6 +668,12 @@ packages:
       sqlite3:
         optional: true
 
+  drizzle-zod@0.8.3:
+    resolution: {integrity: sha512-66yVOuvGhKJnTdiqj1/Xaaz9/qzOdRJADpDa68enqS6g3t0kpNkwNYjUuaeXgZfO/UWuIM9HIhSlJ6C5ZraMww==}
+    peerDependencies:
+      drizzle-orm: '>=0.36.0'
+      zod: ^3.25.0 || ^4.0.0
+
   error-stack-parser-es@1.0.5:
     resolution: {integrity: sha512-5qucVt2XcuGMcEGgWI7i+yZpmpByQ8J1lHhcL7PwqCwu9FPP3VUXzT4ltHe5i2z9dePwEHcDVOAfSnHsOlCXRA==}
 
@@ -1163,6 +1172,11 @@ snapshots:
   drizzle-orm@0.44.7(@cloudflare/workers-types@4.20251109.0):
     optionalDependencies:
       '@cloudflare/workers-types': 4.20251109.0
+
+  drizzle-zod@0.8.3(drizzle-orm@0.44.7(@cloudflare/workers-types@4.20251109.0))(zod@4.1.12):
+    dependencies:
+      drizzle-orm: 0.44.7(@cloudflare/workers-types@4.20251109.0)
+      zod: 4.1.12
 
   error-stack-parser-es@1.0.5: {}
 
