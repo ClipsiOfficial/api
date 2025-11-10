@@ -3,7 +3,7 @@ import type { Env } from "./env";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { Scalar } from "@scalar/hono-api-reference";
 import packageJson from "../package.json" assert { type: "json" };
-import hello from "./routes/helllo.route";
+import example from "./routes/example.index";
 
 export function createRouter() {
   return new OpenAPIHono<{ Bindings: Env }>({ strict: false });
@@ -51,7 +51,7 @@ app.get("/", Scalar({
 }));
 
 const routes = [
-  hello,
+  example,
 ];
 
 routes.forEach((router) => {
