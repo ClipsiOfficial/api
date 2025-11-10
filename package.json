@@ -9,12 +9,12 @@
     "lint:fix": "eslint . --fix"
   },
   "dependencies": {
+    "@hono/zod-openapi": "^1.1.4",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.7",
     "drizzle-zod": "^0.8.3",
     "hono": "^4.10.4",
-    "zod": "^4.1.12",
-    "zod-openapi": "^5.4.3"
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^6.2.0",
