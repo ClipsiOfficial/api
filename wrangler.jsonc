@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "api",
   "main": "src/index.ts",
-  "compatibility_date": "2025-11-10",
+  "compatibility_date": "2025-11-05",
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],
@@ -28,6 +28,10 @@
       "database_id": "926f7a3e-bf2f-482e-83f8-52a5834e43f6",
       "migrations_dir": "drizzle"
     }
+  ],
+  "preview_urls": true,
+  "routes": [
+    { "pattern": "api.clipsi.org", "custom_domain": true }
   ]
   // "ai": {
   //   "binding": "AI"

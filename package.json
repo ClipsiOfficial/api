@@ -16,16 +16,16 @@
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.7",
     "drizzle-zod": "^0.8.3",
-    "hono": "^4.10.4",
+    "hono": "^4.10.5",
     "zod": "^4.1.12"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^6.2.0",
     "@types/node": "^24.10.0",
     "drizzle-kit": "^0.31.6",
-    "eslint": "^9.38.0",
+    "eslint": "^9.39.1",
     "eslint-plugin-format": "^1.0.2",
     "tsx": "^4.20.6",
-    "wrangler": "^4.4.0"
+    "wrangler": "^4.47.0"
   }
 }
