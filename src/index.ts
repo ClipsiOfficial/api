@@ -25,7 +25,7 @@ app.onError((err, c) => {
   return c.json(
     {
       message: err.message,
-      stack: env.ENV === "prod" ? undefined : err.stack,
+      stack: env.NODE_ENV === "production" ? undefined : err.stack,
     },
     statusCode,
   );

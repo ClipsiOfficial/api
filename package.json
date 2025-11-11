@@ -6,6 +6,8 @@
     "dev": "wrangler dev",
     "dev:debug": "SOURCE_MAP=true wrangler dev",
     "deploy": "wrangler deploy --minify",
+    "db:studio": "drizzle-kit studio",
+    "db:studio:prod": "NODE_ENV=production drizzle-kit studio",
     "generate-types": "wrangler types --env-interface CloudflareBindings",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
@@ -21,6 +23,8 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^6.2.0",
+    "@libsql/client": "^0.15.15",
+    "@nerdfolio/drizzle-d1-helpers": "^0.1.4",
     "@types/node": "^24.10.0",
     "drizzle-kit": "^0.31.6",
     "eslint": "^9.39.1",
