@@ -1,4 +1,4 @@
-import { createRouter } from "..";
+import { createRouter } from "@/utils/functions";
 import * as handlers from "./example.handlers";
 import * as routes from "./example.routes";
 

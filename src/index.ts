@@ -1,13 +1,9 @@
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { Env } from "./env";
-import { OpenAPIHono } from "@hono/zod-openapi";
 import { Scalar } from "@scalar/hono-api-reference";
 import packageJson from "../package.json" assert { type: "json" };
 import example from "./routes/example.index";
-
-export function createRouter() {
-  return new OpenAPIHono<{ Bindings: Env }>({ strict: false });
-}
+import { createRouter } from "./utils/functions";
 
 const app = createRouter();
 
