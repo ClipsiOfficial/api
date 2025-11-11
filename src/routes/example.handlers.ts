@@ -1,9 +1,11 @@
 import type { ExampleRoute } from "./example.routes";
 // import type { AnotherExampleRoute } from "./example.routes";
 import type { AppRouteHandler } from "@/utils/types";
+import { getDB } from "@/db";
 
 export const example: AppRouteHandler<ExampleRoute> = async (c) => {
-  return c.json({ message: `Hello Hono! We are on ${c.env.ENV} enviroment` });
+  const users = await getDB(c.env).query.exampleUsers.findMany();
+  return c.json(users);
 };
 
 // Another example handler:

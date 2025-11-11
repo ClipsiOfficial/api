@@ -1,4 +1,5 @@
-import { createRoute, z } from "@hono/zod-openapi";
+import { createRoute } from "@hono/zod-openapi";
+import { selectExampleUsersSchema } from "@/db/schema";
 
 export const example = createRoute({
   method: "get",
@@ -9,9 +10,7 @@ export const example = createRoute({
       description: "Successful response",
       content: {
         "application/json": {
-          schema: z.object({
-            message: z.string(),
-          }),
+          schema: selectExampleUsersSchema.array(),
         },
       },
     },

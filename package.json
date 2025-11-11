@@ -4,6 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "wrangler dev",
+    "dev:debug": "SOURCE_MAP=true wrangler dev",
     "deploy": "wrangler deploy --minify",
     "generate-types": "wrangler types --env-interface CloudflareBindings",
     "lint": "eslint .",

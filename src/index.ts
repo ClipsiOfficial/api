@@ -47,6 +47,7 @@ app.doc("/docs", {
 app.get("/", Scalar({
   url: "/docs",
   theme: "moon",
+  pageTitle: "Clipsi API Documentation",
   layout: "classic",
 }));
 
