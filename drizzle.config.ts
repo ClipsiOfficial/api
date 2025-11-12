@@ -31,7 +31,7 @@ function getCredentials() {
 
 export default defineConfig({
   schema: "./src/db/schema.ts",
-  out: "./drizzle",
+  out: "./src/db/migrations",
   dialect: "sqlite",
   ...getCredentials(),
 });
