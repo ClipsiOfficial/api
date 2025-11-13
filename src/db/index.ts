@@ -1,4 +1,4 @@
-import type { Env } from "../env";
+import type { Env } from "../utils/env";
 import { drizzle } from "drizzle-orm/d1";
 import * as schema from "./schema";
 

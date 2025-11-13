@@ -3,41 +3,51 @@
   "name": "api",
   "main": "src/index.ts",
   "compatibility_date": "2025-11-05",
-  // "compatibility_flags": [
-  //   "nodejs_compat"
-  // ],
-  // "vars": {
-  //   "MY_VAR": "my-variable"
-  // },
-  // "kv_namespaces": [
-  //   {
-  //     "binding": "MY_KV_NAMESPACE",
-  //     "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-  //   }
-  // ],
-  // "r2_buckets": [
-  //   {
-  //     "binding": "MY_BUCKET",
-  //     "bucket_name": "my-bucket"
-  //   }
-  // ],
+  "vars": {
+    "NODE_ENV": "development"
+  },
+  "env": {
+    "production": {
+      "vars": {
+        "NODE_ENV": "production"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "clipsi",
+          "database_id": "926f7a3e-bf2f-482e-83f8-52a5834e43f6",
+          "migrations_dir": "drizzle",
+          "remote": true
+        }
+      ],
+      "vpc_services": [
+        {
+          "binding": "VPC_SERVICE",
+          "service_id": "019a7f43-7930-7933-8281-4fc34feeecb0",
+          "remote": true
+        }
+      ]
+    }
+  },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "clipsi",
       "database_id": "926f7a3e-bf2f-482e-83f8-52a5834e43f6",
-      "migrations_dir": "drizzle"
+      "migrations_dir": "drizzle",
+      "remote": false
     }
   ],
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": true,
+      "persist": true
+    }
+  },
   "preview_urls": true,
   "routes": [
     { "pattern": "api.clipsi.org", "custom_domain": true }
   ]
-  // "ai": {
-  //   "binding": "AI"
-  // },
-  // "observability": {
-  //   "enabled": true,
-  //   "head_sampling_rate": 1
-  // }
 }
