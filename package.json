@@ -4,7 +4,6 @@
   "version": "0.0.2",
   "scripts": {
     "dev": "wrangler dev",
-    "dev:debug": "SOURCE_MAP=true wrangler dev",
     "db:studio": "drizzle-kit studio",
     "db:studio:prod": "NODE_ENV=production drizzle-kit studio",
     "gen-types": "wrangler types --env-interface CloudflareBindings",
