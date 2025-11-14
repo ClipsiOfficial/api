@@ -4,6 +4,7 @@
   "version": "0.0.2",
   "scripts": {
     "dev": "wrangler dev",
+    "db:setup": "mkdir -p .wrangler/state/v3/d1/miniflare-D1DatabaseObject && touch .wrangler/state/v3/d1/miniflare-D1DatabaseObject/626f94dc3f5df36314f9f96e8d9a65a79b8477532bde6ba286c1ce0b7d42e990.sqlite && drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:studio:prod": "NODE_ENV=production drizzle-kit studio",
     "gen-types": "wrangler types --env-interface CloudflareBindings",
