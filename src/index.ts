@@ -1,11 +1,24 @@
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { Env } from "./utils/env";
 import { Scalar } from "@scalar/hono-api-reference";
+import { jwt } from "hono/jwt";
 import packageJson from "../package.json" assert { type: "json" };
 import example from "./routes/example.index";
-import { createRouter } from "./utils/functions";
+import { createRouter, validateEnv } from "./utils/functions";
 
 const app = createRouter();
+
+// Validate and parse environment variables for all routes
+app.use("*", validateEnv());
+
+const publicRoutes = [
+  example,
+  // Login, register, health, and other public routers can be added here ...
+];
+
+const privateRoutes: typeof publicRoutes = [
+  // Add private routers here
+];
 
 app.notFound((c) => {
   return c.json({
@@ -47,11 +60,23 @@ app.get("/", Scalar({
   layout: "classic",
 }));
 
-const routes = [
-  example,
-];
+publicRoutes.forEach((router) => {
+  app.route("/", router);
+});
 
-routes.forEach((router) => {
+app.use("*", (c, next) => {
+  // Bypass JWT verification in development mode
+  if (c.env.NODE_ENV === "development") {
+    return next();
+  }
+
+  const jwtMiddleware = jwt({
+    secret: c.env.JWT_SECRET,
+  });
+  return jwtMiddleware(c, next);
+});
+
+privateRoutes.forEach((router) => {
   app.route("/", router);
 });
 

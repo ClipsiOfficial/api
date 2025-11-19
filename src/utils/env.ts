@@ -6,6 +6,12 @@ export const EnvSchema = z.object({
   VPC_SERVICE: z.unknown() as z.ZodType<Fetcher>,
   RABBITMQ_USER: z.string(),
   RABBITMQ_PASSWORD: z.string(),
+  JWT_SECRET: z.string(),
+  SKIP_JOBS: z.union([z.boolean(), z.string()]).transform((val) => {
+    if (typeof val === "boolean")
+      return val;
+    return val === "true";
+  }).default(true),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

@@ -82,6 +82,12 @@ export async function publishToQueue<Q extends QueueName>(
   message: QueueMessages[Q],
   options: PublishOptions = {},
 ): Promise<boolean> {
+  // Check if jobs are skipped
+  if (env.SKIP_JOBS) {
+    console.warn(`[SKIP_JOBS] Skipping job to queue "${queue}":`, message);
+    return true;
+  }
+
   // Validate against the specific queue schema
   const schema = QueueSchemaMap[queue as QueueName];
   if (!schema)
