@@ -102,7 +102,6 @@ applyTo: '**'
 - [Request](https://hono.dev/docs/api/request)
 - [Routing](https://hono.dev/docs/api/routing)
 
-
 # Guidelines
 
 The proyect is structured following the guidelines of Hono, but we also have our own conventions and structures to follow.
@@ -110,12 +109,13 @@ The proyect is structured following the guidelines of Hono, but we also have our
 ## Architecture
 
 In src/ we have the following folders:
+
 - db/: contains the database schema and related files from drizzle.
 - routes/: contains all the routes of the API, structured by groups of related endpoints.
 - services/: contains the business logic of the application, separated from the routes. For example, connecting to RabbitMQ. Business logic that can be reused across different routes should go here.
 - utils/: contains utility functions and helpers that can be used throughout the application. Now contains helpers for creating sub routers (used in each group of routes), and types definitions.
 - middleware/: contains custom middleware functions that can be applied to routes or the entire application. For example, authentication middleware, logging middleware, error handling middleware, etc.
-index.ts: is the main entry point of the application, where the Hono app is created, middleware is applied, and routes are registered.
+  index.ts: is the main entry point of the application, where the Hono app is created, middleware is applied, and routes are registered.
 
 ## Routes
 
