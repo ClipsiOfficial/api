@@ -9,7 +9,8 @@
   "env": {
     "production": {
       "vars": {
-        "NODE_ENV": "production"
+        "NODE_ENV": "production",
+        "CLOUDFLARE_DB_NAME": "clipsi"
       },
       "d1_databases": [
         {
