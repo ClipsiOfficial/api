@@ -16,15 +16,13 @@ export const login: AppRouteHandler<LoginRoute> = async (c) => {
     where: eq(users.email, email),
   });
 
-  if (!user) {
-    // 401 is defined in the route, but we need to match the response structure if strict.
-    // The route definition says 401 description is "Invalid credentials", but doesn't define content.
-    // Hono might just send the status code if no content is defined.
-    return c.json({ message: "Invalid credentials" }, 401);
-  }
+  // Dummy hash used when user is not found to equalize bcrypt cost
+  const DUMMY_HASH = "$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5V8b6j6Zy3KqFh6u1v0h5o8b5QeW.";
 
-  const validPassword = await compare(password, user.password);
-  if (!validPassword) {
+  const hashToCheck = user ? user.password : DUMMY_HASH;
+  const validPassword = await compare(password, hashToCheck);
+
+  if (!user || !validPassword) {
     return c.json({ message: "Invalid credentials" }, 401);
   }
 
