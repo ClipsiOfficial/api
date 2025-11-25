@@ -4,16 +4,18 @@
   "version": "0.0.2",
   "scripts": {
     "start": "wrangler dev",
-    "db:setup": "mkdir -p .wrangler/state/v3/d1/miniflare-D1DatabaseObject && touch .wrangler/state/v3/d1/miniflare-D1DatabaseObject/626f94dc3f5df36314f9f96e8d9a65a79b8477532bde6ba286c1ce0b7d42e990.sqlite && drizzle-kit push",
-    "db:studio": "drizzle-kit studio",
-    "db:studio:prod": "NODE_ENV=production drizzle-kit studio",
+    "db:setup": "mkdir -p .wrangler/state/v3/d1/miniflare-D1DatabaseObject && touch .wrangler/state/v3/d1/miniflare-D1DatabaseObject/626f94dc3f5df36314f9f96e8d9a65a79b8477532bde6ba286c1ce0b7d42e990.sqlite && drizzle-kit push && pnpm db:seed",
+    "db:seed": "tsx scripts/seed.ts",
+    "db:seed:prod": "NODE_ENV=production tsx scripts/seed.ts",
     "db:push": "drizzle-kit push",
     "db:push:prod": "NODE_ENV=production drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:studio:prod": "NODE_ENV=production drizzle-kit studio",
     "gen-types": "wrangler types --env-interface CloudflareBindings",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "deploy": "wrangler deploy --minify --env production && pnpm db:push:prod",
-    "secrets": "wrangler secret put RABBITMQ_USER --env production && wrangler secret put RABBITMQ_PASSWORD --env production"
+    "secrets": "tsx scripts/secrets.ts"
   },
   "dependencies": {
     "@hono/zod-openapi": "^1.1.4",

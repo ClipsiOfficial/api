@@ -23,13 +23,6 @@ export const login: AppRouteHandler<LoginRoute> = async (c) => {
     return c.json({ message: "Invalid credentials" }, 401);
   }
 
-  // If password is not hashed (legacy/manual), we might want to support plain text check too?
-  // The user said "cargate el ejemplo porque ya se podra usar de base lo qeu hagas! porque el ejemplo no funciona porque el esquema no esta disponible ya que es el real ahora."
-  // And "Es verdad que las passwords han de estar hasheasdas, entonces cambia el esquema para permitir hashes ahi!"
-  // So we should assume hashes. But if I manually insert data, I might insert plain text.
-  // bcrypt.compare can handle this? No.
-  // I will assume all passwords in DB are hashed.
-
   const validPassword = await compare(password, user.password);
   if (!validPassword) {
     return c.json({ message: "Invalid credentials" }, 401);
