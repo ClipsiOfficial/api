@@ -14,7 +14,7 @@
     "gen-types": "wrangler types --env-interface CloudflareBindings",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "deploy": "wrangler deploy --minify --env production && pnpm db:push:prod",
+    "deploy": "pnpm db:push:prod && wrangler deploy --minify --env production",
     "secrets": "tsx scripts/secrets.ts"
   },
   "dependencies": {
