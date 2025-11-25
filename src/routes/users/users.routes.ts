@@ -42,6 +42,12 @@ export const createUser = createRoute({
   path: "/users",
   description: "Create a new user (Admin only)",
   request: {
+    headers: z.object({
+      Authorization: z.string().openapi({
+        param: { name: "Authorization", in: "header" },
+        description: "Bearer access token",
+      }),
+    }),
     body: {
       content: {
         "application/json": {
@@ -74,6 +80,12 @@ export const updateUser = createRoute({
   path: "/users/me",
   description: "Update current user information",
   request: {
+    headers: z.object({
+      Authorization: z.string().openapi({
+        param: { name: "Authorization", in: "header" },
+        description: "Bearer access token",
+      }),
+    }),
     body: {
       content: {
         "application/json": {
