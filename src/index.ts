@@ -33,7 +33,7 @@ app.doc("/docs", {
 
 app.get("/", Scalar({
   url: "/docs",
-  theme: "moon",
+  theme: "elysiajs",
   pageTitle: "Clipsi API Documentation",
   layout: "classic",
 }));
