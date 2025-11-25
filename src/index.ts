@@ -1,10 +1,8 @@
-import type { ContentfulStatusCode } from "hono/utils/http-status";
-import type { Env } from "./utils/env";
 import { Scalar } from "@scalar/hono-api-reference";
-import { jwt } from "hono/jwt";
 import packageJson from "../package.json" assert { type: "json" };
-import example from "./routes/example.index";
-import { createRouter, validateEnv } from "./utils/functions";
+import { authMiddleware, errorHandler, notFoundHandler, validateEnv } from "./middleware";
+import { privateUserRouter, publicUserRouter } from "./routes/users/users.index";
+import { createRouter } from "./utils/functions";
 
 const app = createRouter();
 
@@ -12,37 +10,18 @@ const app = createRouter();
 app.use("*", validateEnv());
 
 const publicRoutes = [
-  example,
+  publicUserRouter,
   // Login, register, health, and other public routers can be added here ...
 ];
 
 const privateRoutes: typeof publicRoutes = [
+  privateUserRouter,
   // Add private routers here
 ];
 
-app.notFound((c) => {
-  return c.json({
-    message: `Not Found - ${c.req.path}`,
-  }, 404);
-});
+app.notFound(notFoundHandler);
 
-app.onError((err, c) => {
-  const currentStatus = "status" in err
-    ? err.status
-    : c.newResponse(null).status;
-  const statusCode = currentStatus !== 200
-    ? (currentStatus as ContentfulStatusCode)
-    : 500;
-
-  const env = c.env as Env;
-  return c.json(
-    {
-      message: err.message,
-      stack: env.NODE_ENV === "production" ? undefined : err.stack,
-    },
-    statusCode,
-  );
-});
+app.onError(errorHandler);
 
 app.doc("/docs", {
   openapi: "3.0.0",
@@ -55,7 +34,7 @@ app.doc("/docs", {
 
 app.get("/", Scalar({
   url: "/docs",
-  theme: "moon",
+  theme: "elysiajs",
   pageTitle: "Clipsi API Documentation",
   layout: "classic",
 }));
@@ -64,17 +43,7 @@ publicRoutes.forEach((router) => {
   app.route("/", router);
 });
 
-app.use("*", (c, next) => {
-  // Bypass JWT verification in development mode
-  if (c.env.NODE_ENV === "development") {
-    return next();
-  }
-
-  const jwtMiddleware = jwt({
-    secret: c.env.JWT_SECRET,
-  });
-  return jwtMiddleware(c, next);
-});
+app.use("*", authMiddleware());
 
 privateRoutes.forEach((router) => {
   app.route("/", router);
