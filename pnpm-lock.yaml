@@ -14,6 +14,9 @@ importers:
       '@scalar/hono-api-reference':
         specifier: ^0.9.24
         version: 0.9.24(hono@4.10.5)
+      bcryptjs:
+        specifier: ^3.0.3
+        version: 3.0.3
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
@@ -39,6 +42,9 @@ importers:
       '@nerdfolio/drizzle-d1-helpers':
         specifier: ^0.1.4
         version: 0.1.4(@cloudflare/workers-types@4.20251109.0)(@libsql/client@0.15.15)(cloudflare@4.5.0)
+      '@types/bcryptjs':
+        specifier: ^3.0.0
+        version: 3.0.0
       '@types/node':
         specifier: ^24.10.1
         version: 24.10.1
@@ -1009,6 +1015,10 @@ packages:
     peerDependencies:
       eslint: '>=9.0.0'
 
+  '@types/bcryptjs@3.0.0':
+    resolution: {integrity: sha512-WRZOuCuaz8UcZZE4R5HXTco2goQSI2XxjGY3hbM/xDvwmqFWd4ivooImsMx65OKM6CtNKbnZ5YL+YwAwK7c1dg==}
+    deprecated: This is a stub types definition. bcryptjs provides its own type definitions, so you do not need this installed.
+
   '@types/debug@4.1.12':
     resolution: {integrity: sha512-vIChWdVG3LG1SMxEvI/AK+FWJthlrqlTu7fbrlywTkkaONwk/UAGaULXRlf8vkzFBLVm0zkMdCquhL5aOjhXPQ==}
 
@@ -1179,6 +1189,10 @@ packages:
 
   baseline-browser-mapping@2.8.28:
     resolution: {integrity: sha512-gYjt7OIqdM0PcttNYP2aVrr2G0bMALkBaoehD4BuRGjAOtipg0b6wHg1yNL+s5zSnLZZrGHOw4IrND8CD+3oIQ==}
+    hasBin: true
+
+  bcryptjs@3.0.3:
+    resolution: {integrity: sha512-GlF5wPWnSa/X5LKM1o0wz0suXIINz1iHRLvTS+sLyi7XPbe5ycmYI3DlZqVGZZtDgl4DmasFg7gOB3JYbphV5g==}
     hasBin: true
 
   blake3-wasm@2.1.5:
@@ -3462,6 +3476,10 @@ snapshots:
       estraverse: 5.3.0
       picomatch: 4.0.3
 
+  '@types/bcryptjs@3.0.0':
+    dependencies:
+      bcryptjs: 3.0.3
+
   '@types/debug@4.1.12':
     dependencies:
       '@types/ms': 2.1.0
@@ -3670,6 +3688,8 @@ snapshots:
   balanced-match@1.0.2: {}
 
   baseline-browser-mapping@2.8.28: {}
+
+  bcryptjs@3.0.3: {}
 
   blake3-wasm@2.1.5: {}
 

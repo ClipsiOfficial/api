@@ -1,0 +1,97 @@
+import type { CreateUserRoute, LoginRoute, UpdateUserRoute } from "./users.routes";
+import type { AppRouteHandler } from "@/utils/types";
+import { compare, hash } from "bcryptjs";
+
+import { eq } from "drizzle-orm";
+import { sign } from "hono/jwt";
+
+import { getDB } from "@/db";
+import { users } from "@/db/schema";
+
+export const login: AppRouteHandler<LoginRoute> = async (c) => {
+  const { email, password } = c.req.valid("json");
+  const db = getDB(c.env);
+
+  const user = await db.query.users.findFirst({
+    where: eq(users.email, email),
+  });
+
+  if (!user) {
+    // 401 is defined in the route, but we need to match the response structure if strict.
+    // The route definition says 401 description is "Invalid credentials", but doesn't define content.
+    // Hono might just send the status code if no content is defined.
+    return c.json({ message: "Invalid credentials" }, 401);
+  }
+
+  // If password is not hashed (legacy/manual), we might want to support plain text check too?
+  // The user said "cargate el ejemplo porque ya se podra usar de base lo qeu hagas! porque el ejemplo no funciona porque el esquema no esta disponible ya que es el real ahora."
+  // And "Es verdad que las passwords han de estar hasheasdas, entonces cambia el esquema para permitir hashes ahi!"
+  // So we should assume hashes. But if I manually insert data, I might insert plain text.
+  // bcrypt.compare can handle this? No.
+  // I will assume all passwords in DB are hashed.
+
+  const validPassword = await compare(password, user.password);
+  if (!validPassword) {
+    return c.json({ message: "Invalid credentials" }, 401);
+  }
+
+  const token = await sign({ sub: user.id, role: user.role }, c.env.JWT_SECRET);
+
+  const { password: _, ...userWithoutPassword } = user;
+
+  return c.json({
+    token,
+    user: userWithoutPassword,
+  });
+};
+
+export const createUser: AppRouteHandler<CreateUserRoute> = async (c) => {
+  const payload = c.get("jwtPayload");
+
+  if (!payload || payload.role !== "admin") {
+    return c.json({ message: "Forbidden - Admin access required" }, 403);
+  }
+
+  const body = c.req.valid("json");
+  const db = getDB(c.env);
+
+  const hashedPassword = await hash(body.password, 10);
+
+  const [newUser] = await db.insert(users).values({
+    ...body,
+    password: hashedPassword,
+  }).returning();
+
+  const { password: _, ...userWithoutPassword } = newUser;
+  return c.json(userWithoutPassword, 201);
+};
+
+export const updateUser: AppRouteHandler<UpdateUserRoute> = async (c) => {
+  const payload = c.get("jwtPayload");
+
+  if (!payload) {
+    return c.json({ message: "Unauthorized" }, 401);
+  }
+
+  const userId = Number(payload.sub);
+  const body = c.req.valid("json");
+  const db = getDB(c.env);
+
+  const updateData: Partial<typeof users.$inferInsert> = { ...body };
+
+  if (body.password) {
+    updateData.password = await hash(body.password, 10);
+  }
+
+  const [updatedUser] = await db.update(users)
+    .set(updateData)
+    .where(eq(users.id, userId))
+    .returning();
+
+  if (!updatedUser) {
+    return c.json({ message: "User not found" }, 404);
+  }
+
+  const { password: _, ...userWithoutPassword } = updatedUser;
+  return c.json(userWithoutPassword);
+};

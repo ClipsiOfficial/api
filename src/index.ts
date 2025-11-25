@@ -1,7 +1,7 @@
 import { Scalar } from "@scalar/hono-api-reference";
 import packageJson from "../package.json" assert { type: "json" };
 import { authMiddleware, errorHandler, notFoundHandler, validateEnv } from "./middleware";
-import example from "./routes/example.index";
+import { privateUserRouter, publicUserRouter } from "./routes/users/users.index";
 import { createRouter } from "./utils/functions";
 
 const app = createRouter();
@@ -10,11 +10,12 @@ const app = createRouter();
 app.use("*", validateEnv());
 
 const publicRoutes = [
-  example,
+  publicUserRouter,
   // Login, register, health, and other public routers can be added here ...
 ];
 
 const privateRoutes: typeof publicRoutes = [
+  privateUserRouter,
   // Add private routers here
 ];
 

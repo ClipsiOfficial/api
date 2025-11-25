@@ -6,6 +6,9 @@ import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 export const rssAtomSourceEnum = ["manual", "found", "inherited"] as const;
 export type RssAtomSource = (typeof rssAtomSourceEnum)[number];
 
+export const userRolesEnum = ["admin", "user"] as const;
+export type UserRole = (typeof userRolesEnum)[number];
+
 // Tables
 export const subscriptions = sqliteTable("subscription", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -17,7 +20,8 @@ export const users = sqliteTable("user", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   username: text("username", { length: 20 }).notNull().unique(),
   email: text("email", { length: 255 }).notNull().unique(),
-  password: text("password", { length: 25 }).notNull(),
+  password: text("password", { length: 255 }).notNull(),
+  role: text("role", { enum: userRolesEnum }).notNull().default("user"),
   subscriptionId: integer("subscription").notNull().references(() => subscriptions.id),
 });
 
