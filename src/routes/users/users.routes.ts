@@ -11,8 +11,8 @@ export const login = createRoute({
       content: {
         "application/json": {
           schema: z.object({
-            email: z.string().email(),
-            password: z.string(),
+            email: z.email(),
+            password: z.string().min(6),
           }),
         },
       },
@@ -91,7 +91,7 @@ export const updateUser = createRoute({
         "application/json": {
           schema: z.object({
             username: z.string().min(3).optional(),
-            email: z.string().email().optional(),
+            email: z.email().optional(),
             password: z.string().min(6).optional(),
           }),
         },
