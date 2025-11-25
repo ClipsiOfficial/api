@@ -20,7 +20,7 @@ export const users = sqliteTable("user", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   username: text("username", { length: 20 }).notNull().unique(),
   email: text("email", { length: 255 }).notNull().unique(),
-  password: text("password", { length: 255 }).notNull(),
+  password: text("password", { length: 60 }).notNull(),
   role: text("role", { enum: userRolesEnum }).notNull().default("user"),
   subscriptionId: integer("subscription").notNull().references(() => subscriptions.id),
 });

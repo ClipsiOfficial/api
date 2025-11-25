@@ -90,7 +90,7 @@ export const updateUser = createRoute({
       content: {
         "application/json": {
           schema: z.object({
-            username: z.string().min(3).optional(),
+            username: z.string().min(3).max(20).optional(),
             email: z.email().optional(),
             password: z.string().min(6).optional(),
           }),
