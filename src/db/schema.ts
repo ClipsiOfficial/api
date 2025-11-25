@@ -76,24 +76,21 @@ export const keywords = sqliteTable("keyword", {
 
 export const usersToProjects = sqliteTable("user_project", {
   userId: integer("user_id").references(() => users.id),
-  // Keeping column name 'project_members' from SQL but referencing projects.id
-  projectId: integer("project_members").references(() => projects.id),
+  projectId: integer("project_id").references(() => projects.id),
 }, t => ({
   pk: primaryKey({ columns: [t.userId, t.projectId] }),
 }));
 
 export const keywordsToNews = sqliteTable("keyword_news", {
   keywordId: integer("keyword_id").references(() => keywords.id),
-  // Keeping column name 'news_keywords' from SQL but referencing news.id
-  newsId: integer("news_keywords").references(() => news.id),
+  newsId: integer("news_id").references(() => news.id),
 }, t => ({
   pk: primaryKey({ columns: [t.keywordId, t.newsId] }),
 }));
 
 export const newsToSavedNews = sqliteTable("news_saved_news", {
   newsId: integer("news_id").references(() => news.id),
-  // Keeping column name 'saved_news_source_new' from SQL but referencing savedNews.id
-  savedNewsId: integer("saved_news_source_new").references(() => savedNews.id),
+  savedNewsId: integer("saved_news_id").references(() => savedNews.id),
 }, t => ({
   pk: primaryKey({ columns: [t.newsId, t.savedNewsId] }),
 }));
