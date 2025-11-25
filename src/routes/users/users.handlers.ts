@@ -48,13 +48,28 @@ export const createUser: AppRouteHandler<CreateUserRoute> = async (c) => {
 
   const hashedPassword = await hash(body.password, 10);
 
-  const [newUser] = await db.insert(users).values({
-    ...body,
-    password: hashedPassword,
-  }).returning();
+  try {
+    const [newUser] = await db.insert(users).values({
+      ...body,
+      password: hashedPassword,
+    }).returning();
 
-  const { password: _, ...userWithoutPassword } = newUser;
-  return c.json(userWithoutPassword, 201);
+    const { password: _, ...userWithoutPassword } = newUser;
+    return c.json(userWithoutPassword, 201);
+  }
+  catch (error) {
+    // Handle SQLite unique constraint violations
+    if (error instanceof Error && error.message.includes("UNIQUE constraint failed")) {
+      if (error.message.includes("user.email")) {
+        return c.json({ message: "Email already exists" }, 409);
+      }
+      if (error.message.includes("user.username")) {
+        return c.json({ message: "Username already exists" }, 409);
+      }
+      return c.json({ message: "User with this email or username already exists" }, 409);
+    }
+    throw error;
+  }
 };
 
 export const updateUser: AppRouteHandler<UpdateUserRoute> = async (c) => {
@@ -74,15 +89,30 @@ export const updateUser: AppRouteHandler<UpdateUserRoute> = async (c) => {
     updateData.password = await hash(body.password, 10);
   }
 
-  const [updatedUser] = await db.update(users)
-    .set(updateData)
-    .where(eq(users.id, userId))
-    .returning();
+  try {
+    const [updatedUser] = await db.update(users)
+      .set(updateData)
+      .where(eq(users.id, userId))
+      .returning();
 
-  if (!updatedUser) {
-    return c.json({ message: "User not found" }, 404);
+    if (!updatedUser) {
+      return c.json({ message: "User not found" }, 404);
+    }
+
+    const { password: _, ...userWithoutPassword } = updatedUser;
+    return c.json(userWithoutPassword);
   }
-
-  const { password: _, ...userWithoutPassword } = updatedUser;
-  return c.json(userWithoutPassword);
+  catch (error) {
+    // Handle SQLite unique constraint violations
+    if (error instanceof Error && error.message.includes("UNIQUE constraint failed")) {
+      if (error.message.includes("user.email")) {
+        return c.json({ message: "Email already exists" }, 409);
+      }
+      if (error.message.includes("user.username")) {
+        return c.json({ message: "Username already exists" }, 409);
+      }
+      return c.json({ message: "User with this email or username already exists" }, 409);
+    }
+    throw error;
+  }
 };
