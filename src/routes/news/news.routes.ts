@@ -1,0 +1,131 @@
+import { createRoute, z } from "@hono/zod-openapi";
+import { insertNewsSchema, insertSavedNewsSchema, selectNewsSchema, selectSavedNewsSchema } from "@/db/schema";
+
+// Create News Route
+export const createNews = createRoute({
+  method: "post",
+  path: "/news",
+  description: "Create a new news entry",
+  request: {
+    headers: z.object({
+      Authorization: z.string().openapi({
+        param: { name: "Authorization", in: "header" },
+        description: "Bearer access token",
+      }),
+    }),
+    body: {
+      content: {
+        "application/json": {
+          schema: insertNewsSchema.omit({ id: true }),
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: "News created successfully",
+      content: {
+        "application/json": {
+          schema: selectNewsSchema,
+        },
+      },
+    },
+    401: {
+      description: "Unauthorized",
+    },
+    409: {
+      description: "News already exists",
+    },
+  },
+});
+
+// Save News Route (Copy from news to saved_news)
+export const saveNews = createRoute({
+  method: "post",
+  path: "/news/save",
+  description: "Save a news entry to a project",
+  request: {
+    headers: z.object({
+      Authorization: z.string().openapi({
+        param: { name: "Authorization", in: "header" },
+        description: "Bearer access token",
+      }),
+    }),
+    body: {
+      content: {
+        "application/json": {
+          schema: z.object({
+            newsId: z.number(),
+            projectId: z.number(),
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: "News saved successfully",
+      content: {
+        "application/json": {
+          schema: selectSavedNewsSchema,
+        },
+      },
+    },
+    401: {
+      description: "Unauthorized",
+    },
+    404: {
+      description: "News or Project not found",
+    },
+  },
+});
+
+// Edit Saved News Route
+export const updateSavedNews = createRoute({
+  method: "patch",
+  path: "/saved-news/{id}",
+  description: "Update a saved news entry",
+  request: {
+    headers: z.object({
+      Authorization: z.string().openapi({
+        param: { name: "Authorization", in: "header" },
+        description: "Bearer access token",
+      }),
+    }),
+    params: z.object({
+      id: z.string().transform(v => Number(v)),
+    }),
+    body: {
+      content: {
+        "application/json": {
+          schema: insertSavedNewsSchema.pick({
+            title: true,
+            summary: true,
+            category: true,
+            views: true,
+          }).partial(),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Saved news updated successfully",
+      content: {
+        "application/json": {
+          schema: selectSavedNewsSchema,
+        },
+      },
+    },
+    401: {
+      description: "Unauthorized",
+    },
+    404: {
+      description: "Saved news not found",
+    },
+  },
+});
+
+export type CreateNewsRoute = typeof createNews;
+export type SaveNewsRoute = typeof saveNews;
+export type UpdateSavedNewsRoute = typeof updateSavedNews;

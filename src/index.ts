@@ -1,5 +1,6 @@
 import { Scalar } from "@scalar/hono-api-reference";
 import packageJson from "../package.json" assert { type: "json" };
+import { privateNewsRouter } from "./routes/news/news.index";
 import { authMiddleware, corsMiddleware, errorHandler, notFoundHandler, validateEnv } from "./middleware";
 import { privateUserRouter, publicUserRouter } from "./routes/users/users.index";
 import { createRouter } from "./utils/functions";
@@ -18,6 +19,7 @@ const publicRoutes = [
 
 const privateRoutes: typeof publicRoutes = [
   privateUserRouter,
+  privateNewsRouter,
   // Add private routers here
 ];
 
