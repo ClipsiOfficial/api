@@ -66,7 +66,7 @@ export const savedNews = sqliteTable("saved_news", {
 export const keywords = sqliteTable("keyword", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   content: text("content").notNull(),
-  searches: integer("searches").default(0),
+  searches: integer("searches").notNull().default(0),
   projectId: integer("project_id").notNull().references(() => projects.id),
 }, t => ({
   unq: uniqueIndex("keyword_project_id_content_idx").on(t.projectId, t.content),

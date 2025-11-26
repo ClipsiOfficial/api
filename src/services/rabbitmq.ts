@@ -22,9 +22,9 @@ export const RSSMessageSchema = z.object({
 });
 
 export const SearcherMessageSchema = z.object({
-  message: z.string(), // TODO: Define the structure of a searcher message
-//   kind: z.literal("extractor"),
-//   feedUrl: z.string().url(),
+  projectId: z.number().refine(id => id > 0, { message: "projectId must be a positive integer" }),
+  topic: z.string().min(1, { message: "topic cannot be empty" }),
+  keyword: z.string().min(1, { message: "keyword cannot be empty" }),
 });
 
 // Map queue name to its schema so we validate against the specific queue schema

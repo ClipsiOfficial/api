@@ -1,8 +1,10 @@
+import type { Env as BindingsEnv } from "./utils/env";
 import { Scalar } from "@scalar/hono-api-reference";
 import packageJson from "../package.json" assert { type: "json" };
 import { privateNewsRouter } from "./routes/news/news.index";
 import { authMiddleware, corsMiddleware, errorHandler, notFoundHandler, validateEnv } from "./middleware";
 import { privateUserRouter, publicUserRouter } from "./routes/users/users.index";
+import handleSchedulers from "./services/scheduler";
 import { createRouter } from "./utils/functions";
 
 const app = createRouter();
@@ -53,4 +55,10 @@ privateRoutes.forEach((router) => {
   app.route("/", router);
 });
 
-export default app;
+export default {
+  // The Hono app handles regular HTTP requests
+  fetch: app.fetch,
+  async scheduled(controller: ScheduledController, env: { Bindings: BindingsEnv }, ctx: ExecutionContext) {
+    ctx.waitUntil(handleSchedulers(controller, env.Bindings));
+  },
+};
