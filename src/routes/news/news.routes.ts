@@ -126,6 +126,87 @@ export const updateSavedNews = createRoute({
   },
 });
 
+// Get News Route
+export const getNews = createRoute({
+  method: "get",
+  path: "/news",
+  description: "Get news for a project",
+  request: {
+    headers: z.object({
+      Authorization: z.string().openapi({
+        param: { name: "Authorization", in: "header" },
+        description: "Bearer access token",
+      }),
+    }),
+    query: z.object({
+      projectId: z.string().transform(v => Number(v)).openapi({ param: { name: "projectId", in: "query" } }),
+      page: z.string().optional().default("1").transform(v => Number(v)).openapi({ param: { name: "page", in: "query" } }),
+      limit: z.string().optional().default("10").transform(v => Number(v)).openapi({ param: { name: "limit", in: "query" } }),
+      search: z.string().optional().openapi({ param: { name: "search", in: "query" } }),
+    }),
+  },
+  responses: {
+    200: {
+      description: "List of news",
+      content: {
+        "application/json": {
+          schema: z.object({
+            data: z.array(selectNewsSchema),
+            total: z.number(),
+            page: z.number(),
+            limit: z.number(),
+          }),
+        },
+      },
+    },
+    401: {
+      description: "Unauthorized",
+    },
+  },
+});
+
+// Get Saved News Route
+export const getSavedNews = createRoute({
+  method: "get",
+  path: "/saved-news",
+  description: "Get saved news for a project",
+  request: {
+    headers: z.object({
+      Authorization: z.string().openapi({
+        param: { name: "Authorization", in: "header" },
+        description: "Bearer access token",
+      }),
+    }),
+    query: z.object({
+      projectId: z.string().transform(v => Number(v)).openapi({ param: { name: "projectId", in: "query" } }),
+      page: z.string().optional().default("1").transform(v => Number(v)).openapi({ param: { name: "page", in: "query" } }),
+      limit: z.string().optional().default("10").transform(v => Number(v)).openapi({ param: { name: "limit", in: "query" } }),
+      search: z.string().optional().openapi({ param: { name: "search", in: "query" } }),
+      category: z.string().optional().openapi({ param: { name: "category", in: "query" } }),
+    }),
+  },
+  responses: {
+    200: {
+      description: "List of saved news",
+      content: {
+        "application/json": {
+          schema: z.object({
+            data: z.array(selectSavedNewsSchema),
+            total: z.number(),
+            page: z.number(),
+            limit: z.number(),
+          }),
+        },
+      },
+    },
+    401: {
+      description: "Unauthorized",
+    },
+  },
+});
+
 export type CreateNewsRoute = typeof createNews;
 export type SaveNewsRoute = typeof saveNews;
 export type UpdateSavedNewsRoute = typeof updateSavedNews;
+export type GetNewsRoute = typeof getNews;
+export type GetSavedNewsRoute = typeof getSavedNews;

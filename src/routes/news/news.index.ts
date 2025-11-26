@@ -7,3 +7,5 @@ export const privateNewsRouter = createRouter();
 privateNewsRouter.openapi(routes.createNews, handlers.createNews);
 privateNewsRouter.openapi(routes.saveNews, handlers.saveNews);
 privateNewsRouter.openapi(routes.updateSavedNews, handlers.updateSavedNews);
+privateNewsRouter.openapi(routes.getNews, handlers.getNews);
+privateNewsRouter.openapi(routes.getSavedNews, handlers.getSavedNews);

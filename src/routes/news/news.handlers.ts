@@ -1,8 +1,8 @@
-import type { CreateNewsRoute, SaveNewsRoute, UpdateSavedNewsRoute } from "./news.routes";
+import type { CreateNewsRoute, GetNewsRoute, GetSavedNewsRoute, SaveNewsRoute, UpdateSavedNewsRoute } from "./news.routes";
 import type { AppRouteHandler } from "@/utils/types";
-import { eq } from "drizzle-orm";
+import { and, desc, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { getDB } from "@/db";
-import { news, newsToSavedNews, savedNews } from "@/db/schema";
+import { keywords, keywordsToNews, news, newsToSavedNews, savedNews } from "@/db/schema";
 
 export const createNews: AppRouteHandler<CreateNewsRoute> = async (c) => {
   const body = c.req.valid("json");
@@ -81,4 +81,115 @@ export const updateSavedNews: AppRouteHandler<UpdateSavedNewsRoute> = async (c) 
   }
 
   return c.json(updatedSavedNews, 200);
+};
+
+export const getNews: AppRouteHandler<GetNewsRoute> = async (c) => {
+  const { projectId, page, limit, search } = c.req.valid("query");
+  const db = getDB(c.env);
+
+  // 1. Get keywords for the project
+  const projectKeywords = await db.query.keywords.findMany({
+    where: eq(keywords.projectId, projectId),
+  });
+
+  if (projectKeywords.length === 0) {
+    return c.json({ data: [], total: 0, page, limit });
+  }
+
+  const keywordIds = projectKeywords.map(k => k.id);
+
+  // 2. Get saved news source IDs to exclude
+  const savedNewsItems = await db.query.savedNews.findMany({
+    where: eq(savedNews.projectId, projectId),
+    columns: { sourceNewId: true },
+  });
+  const excludedNewsIds = savedNewsItems.map(sn => sn.sourceNewId);
+
+  // 3. Build query for news
+  const conditions = [
+    inArray(keywordsToNews.keywordId, keywordIds),
+  ];
+
+  if (excludedNewsIds.length > 0) {
+    conditions.push(notInArray(news.id, excludedNewsIds));
+  }
+
+  if (search) {
+    conditions.push(
+      sql`(${news.title} LIKE ${`%${search}%`} OR ${news.summary} LIKE ${`%${search}%`})`,
+    );
+  }
+
+  // Count total
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(distinct ${news.id})` })
+    .from(news)
+    .innerJoin(keywordsToNews, eq(news.id, keywordsToNews.newsId))
+    .where(and(...conditions));
+
+  // Fetch data
+  const data = await db
+    .selectDistinct({
+      id: news.id,
+      url: news.url,
+      title: news.title,
+      summary: news.summary,
+      timestamp: news.timestamp,
+      keywords: news.keywords,
+      rssAtomId: news.rssAtomId,
+    })
+    .from(news)
+    .innerJoin(keywordsToNews, eq(news.id, keywordsToNews.newsId))
+    .where(and(...conditions))
+    .limit(limit)
+    .offset((page - 1) * limit)
+    .orderBy(desc(news.timestamp));
+
+  return c.json({
+    data,
+    total: count,
+    page,
+    limit,
+  });
+};
+
+export const getSavedNews: AppRouteHandler<GetSavedNewsRoute> = async (c) => {
+  const { projectId, page, limit, search, category } = c.req.valid("query");
+  const db = getDB(c.env);
+
+  const conditions = [
+    eq(savedNews.projectId, projectId),
+  ];
+
+  if (search) {
+    conditions.push(
+      sql`(${savedNews.title} LIKE ${`%${search}%`} OR ${savedNews.summary} LIKE ${`%${search}%`})`,
+    );
+  }
+
+  if (category) {
+    conditions.push(eq(savedNews.category, category));
+  }
+
+  // Count total
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(savedNews)
+    .where(and(...conditions));
+
+  // Fetch data
+  const data = await db
+    .select()
+    .from(savedNews)
+    .where(and(...conditions))
+    .limit(limit)
+    .offset((page - 1) * limit)
+    .orderBy(desc(savedNews.id));
+
+  return c.json({
+    data,
+    total: count,
+    page,
+    limit,
+  });
 };
