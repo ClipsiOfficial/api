@@ -1,10 +1,10 @@
 import { createRoute, z } from "@hono/zod-openapi";
-import { insertNewsSchema, insertSavedNewsSchema, selectNewsSchema, selectSavedNewsSchema } from "@/db/schema";
+import { insertSavedNewsSchema, selectNewsSchema, selectSavedNewsSchema } from "@/db/schema";
 
 // Create News Route
 export const createNews = createRoute({
   method: "post",
-  path: "/news",
+  path: "/admin/news",
   description: "Create a new news entry",
   request: {
     headers: z.object({
@@ -16,7 +16,14 @@ export const createNews = createRoute({
     body: {
       content: {
         "application/json": {
-          schema: insertNewsSchema.omit({ id: true }),
+          schema: z.object({
+            keyword_id: z.number(),
+            rss_atom_id: z.number().optional(),
+            url: z.url(),
+            title: z.string(),
+            summary: z.string(),
+            published_date: z.date().optional(),
+          }),
         },
       },
     },
@@ -165,6 +172,38 @@ export const getNews = createRoute({
   },
 });
 
+export const existsNews = createRoute({
+  method: "get",
+  path: "/admin/news/exists",
+  description: "Check if a news entry exists by URL",
+  request: {
+    headers: z.object({
+      Authorization: z.string().openapi({
+        param: { name: "Authorization", in: "header" },
+        description: "Bearer access token",
+      }),
+    }),
+    query: z.object({
+      url: z.url().openapi({ param: { name: "url", in: "query" } }),
+    }),
+  },
+  responses: {
+    200: {
+      description: "News existence check",
+      content: {
+        "application/json": {
+          schema: z.object({
+            exists: z.boolean(),
+          }),
+        },
+      },
+    },
+    401: {
+      description: "Unauthorized",
+    },
+  },
+});
+
 // Get Saved News Route
 export const getSavedNews = createRoute({
   method: "get",
@@ -209,4 +248,5 @@ export type CreateNewsRoute = typeof createNews;
 export type SaveNewsRoute = typeof saveNews;
 export type UpdateSavedNewsRoute = typeof updateSavedNews;
 export type GetNewsRoute = typeof getNews;
+export type ExistsNewsRoute = typeof existsNews;
 export type GetSavedNewsRoute = typeof getSavedNews;

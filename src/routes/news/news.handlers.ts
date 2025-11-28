@@ -1,11 +1,11 @@
-import type { CreateNewsRoute, GetNewsRoute, GetSavedNewsRoute, SaveNewsRoute, UpdateSavedNewsRoute } from "./news.routes";
+import type { CreateNewsRoute, ExistsNewsRoute, GetNewsRoute, GetSavedNewsRoute, SaveNewsRoute, UpdateSavedNewsRoute } from "./news.routes";
 import type { AppRouteHandler } from "@/utils/types";
 import { and, desc, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { getDB } from "@/db";
 import { keywords, keywordsToNews, news, newsToSavedNews, savedNews } from "@/db/schema";
 
 export const createNews: AppRouteHandler<CreateNewsRoute> = async (c) => {
-  const body = c.req.valid("json");
+  const { keyword_id, rss_atom_id, url, title, summary, published_date } = c.req.valid("json");
   const db = getDB(c.env);
   const jwt = c.get("jwtPayload");
 
@@ -14,7 +14,19 @@ export const createNews: AppRouteHandler<CreateNewsRoute> = async (c) => {
   }
 
   try {
-    const [newNews] = await db.insert(news).values(body).returning();
+    const [newNews] = await db.insert(news).values({
+      url,
+      title,
+      summary,
+      timestamp: published_date ?? new Date(),
+      rssAtomId: rss_atom_id,
+    }).returning();
+
+    await db.insert(keywordsToNews).values({
+      newsId: newNews.id,
+      keywordId: keyword_id,
+    });
+
     return c.json(newNews, 201);
   }
   catch (error) {
@@ -108,6 +120,7 @@ export const getNews: AppRouteHandler<GetNewsRoute> = async (c) => {
   // 3. Build query for news
   const conditions = [
     inArray(keywordsToNews.keywordId, keywordIds),
+    eq(keywords.visible, 1),
   ];
 
   if (excludedNewsIds.length > 0) {
@@ -124,7 +137,8 @@ export const getNews: AppRouteHandler<GetNewsRoute> = async (c) => {
   const [{ count }] = await db
     .select({ count: sql<number>`count(distinct ${news.id})` })
     .from(news)
-    .innerJoin(keywordsToNews, eq(news.id, keywordsToNews.newsId))
+    .innerJoin(keywordsToNews, and(eq(news.id, keywordsToNews.newsId)))
+    .innerJoin(keywords, eq(keywordsToNews.keywordId, keywords.id))
     .where(and(...conditions));
 
   // Fetch data
@@ -151,6 +165,23 @@ export const getNews: AppRouteHandler<GetNewsRoute> = async (c) => {
     page,
     limit,
   });
+};
+
+export const existsNews: AppRouteHandler<ExistsNewsRoute> = async (c) => {
+  const { url } = c.req.valid("query");
+  const jwt = c.get("jwtPayload");
+  const db = getDB(c.env);
+
+  if (!jwt || jwt.role !== "admin") {
+    return c.json({ message: "Forbidden - Admin access required" }, 401);
+  }
+
+  const existingNews = await db.query.news.findFirst({
+    where: eq(news.url, url),
+    columns: { id: true },
+  });
+
+  return c.json({ exists: !!existingNews });
 };
 
 export const getSavedNews: AppRouteHandler<GetSavedNewsRoute> = async (c) => {
