@@ -1,7 +1,7 @@
-import type { Env } from "./../utils/env";
+import type { Env } from "@/utils/env";
 import { asc, eq } from "drizzle-orm";
 import { getDB } from "@/db";
-import { keywords } from "./../db/schema";
+import { keywords } from "@/db/schema";
 import { publishToQueue } from "./rabbitmq";
 
 async function handleSchedulers(controller: ScheduledController, env: Env) {
@@ -32,9 +32,11 @@ async function searchNews(env: Env) {
     // For each keyword, perform news search
     for (const keyword of topKeywords) {
       publishToQueue(env, "searcher", {
-        projectId: project.id,
+        project_id: project.id,
         topic: project.topic,
+        keyword_id: keyword.id,
         keyword: keyword.content,
+        searches: keyword.searches,
       });
 
       // Update searchers count
@@ -45,6 +47,7 @@ async function searchNews(env: Env) {
   }
 }
 
+// eslint-disable-next-line unused-imports/no-unused-vars
 async function refreshFeeds(env: Env) {
   // TODO: Implement feed refreshing logic here
 }
