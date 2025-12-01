@@ -26,7 +26,7 @@ export const login: AppRouteHandler<LoginRoute> = async (c) => {
     return c.json({ message: "Invalid credentials" }, 401);
   }
 
-  const token = await sign({ sub: user.id, role: user.role }, c.env.JWT_SECRET);
+  const token = await sign({ sub: user.id, role: user.role, exp: Math.floor(Date.now() / 1000) + 3600 }, c.env.JWT_SECRET);
 
   const { password: _, ...userWithoutPassword } = user;
 
