@@ -39,9 +39,9 @@ export const rssAtoms = sqliteTable("rss_atom", {
   projectId: integer("project_id").notNull().references(() => projects.id),
   url: text("url").notNull(),
   source: text("source", { enum: rssAtomSourceEnum }),
-}, t => ({
-  unq: uniqueIndex("rss_atom_project_id_url_idx").on(t.projectId, t.url),
-}));
+}, t => ([
+  uniqueIndex("rss_atom_project_id_url_idx").on(t.projectId, t.url),
+]));
 
 export const news = sqliteTable("news", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -70,32 +70,32 @@ export const keywords = sqliteTable("keyword", {
   projectId: integer("project_id").notNull().references(() => projects.id),
   allProcessed: integer("all_processed").notNull().default(0), // TODO: Create and endpoint to mark that all news have been  found by this keyword (valid for admin)
   visible: integer("visible").notNull().default(1), // TODO: Create and endpoint to toggle visibility (valid for admin and project owners)
-}, t => ({
-  unq: uniqueIndex("keyword_project_id_content_idx").on(t.projectId, t.content),
-}));
+}, t => ([
+  uniqueIndex("keyword_project_id_content_idx").on(t.projectId, t.content),
+]));
 
 // Join Tables
 
 export const usersToProjects = sqliteTable("user_project", {
   userId: integer("user_id").references(() => users.id),
   projectId: integer("project_id").references(() => projects.id),
-}, t => ({
-  pk: primaryKey({ columns: [t.userId, t.projectId] }),
-}));
+}, t => ([
+  primaryKey({ columns: [t.userId, t.projectId] }),
+]));
 
 export const keywordsToNews = sqliteTable("keyword_news", {
   keywordId: integer("keyword_id").references(() => keywords.id),
   newsId: integer("news_id").references(() => news.id),
-}, t => ({
-  pk: primaryKey({ columns: [t.keywordId, t.newsId] }),
-}));
+}, t => ([
+  primaryKey({ columns: [t.keywordId, t.newsId] }),
+]));
 
 export const newsToSavedNews = sqliteTable("news_saved_news", {
   newsId: integer("news_id").references(() => news.id),
   savedNewsId: integer("saved_news_id").references(() => savedNews.id),
-}, t => ({
-  pk: primaryKey({ columns: [t.newsId, t.savedNewsId] }),
-}));
+}, t => ([
+  primaryKey({ columns: [t.newsId, t.savedNewsId] }),
+]));
 
 // Relations
 
