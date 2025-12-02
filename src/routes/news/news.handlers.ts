@@ -38,7 +38,8 @@ export const createNews: AppRouteHandler<CreateNewsRoute> = async (c) => {
 };
 
 export const saveNews: AppRouteHandler<SaveNewsRoute> = async (c) => {
-  const { newsId, projectId } = c.req.valid("json");
+  const { projectId } = c.req.valid("json");
+  const newsId = c.req.valid("param").id;
   const db = getDB(c.env);
 
   // TODO: fetch project and check if it exists and the user has access to it (at least is member)

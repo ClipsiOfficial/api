@@ -4,8 +4,10 @@ import { insertSavedNewsSchema, selectNewsSchema, selectSavedNewsSchema } from "
 // Create News Route
 export const createNews = createRoute({
   method: "post",
-  path: "/admin/news",
+  path: "/news",
   description: "Create a new news entry",
+  summary: "Create a new news entry (Admin role only)",
+  tags: ["Admin Only"],
   request: {
     headers: z.object({
       Authorization: z.string().openapi({
@@ -49,8 +51,10 @@ export const createNews = createRoute({
 // Save News Route (Copy from news to saved_news)
 export const saveNews = createRoute({
   method: "post",
-  path: "/news/save",
+  path: "/news/{id}/save",
   description: "Save a news entry to a project",
+  summary: "Copies an existing news entry to the saved_news table for a specific project",
+  tags: ["News"],
   request: {
     headers: z.object({
       Authorization: z.string().openapi({
@@ -58,11 +62,13 @@ export const saveNews = createRoute({
         description: "Bearer access token",
       }),
     }),
+    params: z.object({
+      id: z.string().transform(v => Number(v)),
+    }),
     body: {
       content: {
         "application/json": {
           schema: z.object({
-            newsId: z.number(),
             projectId: z.number(),
           }),
         },
@@ -92,6 +98,8 @@ export const updateSavedNews = createRoute({
   method: "patch",
   path: "/saved-news/{id}",
   description: "Update a saved news entry",
+  summary: "Update fields of a saved news entry",
+  tags: ["News"],
   request: {
     headers: z.object({
       Authorization: z.string().openapi({
@@ -138,6 +146,8 @@ export const getNews = createRoute({
   method: "get",
   path: "/news",
   description: "Get news for a project",
+  summary: "Retrieve news entries associated with a specific project",
+  tags: ["News"],
   request: {
     headers: z.object({
       Authorization: z.string().openapi({
@@ -176,6 +186,8 @@ export const existsNews = createRoute({
   method: "get",
   path: "/admin/news/exists",
   description: "Check if a news entry exists by URL",
+  summary: "Check existence of a news entry based on its URL (Admin role only)",
+  tags: ["Admin Only"],
   request: {
     headers: z.object({
       Authorization: z.string().openapi({
@@ -209,6 +221,8 @@ export const getSavedNews = createRoute({
   method: "get",
   path: "/saved-news",
   description: "Get saved news for a project",
+  summary: "Retrieve saved news entries associated with a specific project",
+  tags: ["News"],
   request: {
     headers: z.object({
       Authorization: z.string().openapi({
