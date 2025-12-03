@@ -16,19 +16,17 @@ export const login: AppRouteHandler<LoginRoute> = async (c) => {
     where: eq(users.email, email),
   });
 
-  if (!user) {
-    // 401 is defined in the route, but we need to match the response structure if strict.
-    // The route definition says 401 description is "Invalid credentials", but doesn't define content.
-    // Hono might just send the status code if no content is defined.
+  // Dummy hash used when user is not found to equalize bcrypt cost
+  const DUMMY_HASH = "$2a$10$7EqJtq98hPqEX7fNZaFWoOhi5V8b6j6Zy3KqFh6u1v0h5o8b5QeW.";
+
+  const hashToCheck = user ? user.password : DUMMY_HASH;
+  const validPassword = await compare(password, hashToCheck);
+
+  if (!user || !validPassword) {
     return c.json({ message: "Invalid credentials" }, 401);
   }
 
-  const validPassword = await compare(password, user.password);
-  if (!validPassword) {
-    return c.json({ message: "Invalid credentials" }, 401);
-  }
-
-  const token = await sign({ sub: user.id, role: user.role }, c.env.JWT_SECRET);
+  const token = await sign({ sub: user.id, role: user.role, exp: Math.floor(Date.now() / 1000) + 3600 }, c.env.JWT_SECRET);
 
   const { password: _, ...userWithoutPassword } = user;
 
@@ -50,13 +48,28 @@ export const createUser: AppRouteHandler<CreateUserRoute> = async (c) => {
 
   const hashedPassword = await hash(body.password, 10);
 
-  const [newUser] = await db.insert(users).values({
-    ...body,
-    password: hashedPassword,
-  }).returning();
+  try {
+    const [newUser] = await db.insert(users).values({
+      ...body,
+      password: hashedPassword,
+    }).returning();
 
-  const { password: _, ...userWithoutPassword } = newUser;
-  return c.json(userWithoutPassword, 201);
+    const { password: _, ...userWithoutPassword } = newUser;
+    return c.json(userWithoutPassword, 201);
+  }
+  catch (error) {
+    // Handle SQLite unique constraint violations
+    if (error instanceof Error && error.message.includes("UNIQUE constraint failed")) {
+      if (error.message.includes("user.email")) {
+        return c.json({ message: "Email already exists" }, 409);
+      }
+      if (error.message.includes("user.username")) {
+        return c.json({ message: "Username already exists" }, 409);
+      }
+      return c.json({ message: "User with this email or username already exists" }, 409);
+    }
+    throw error;
+  }
 };
 
 export const updateUser: AppRouteHandler<UpdateUserRoute> = async (c) => {
@@ -76,15 +89,30 @@ export const updateUser: AppRouteHandler<UpdateUserRoute> = async (c) => {
     updateData.password = await hash(body.password, 10);
   }
 
-  const [updatedUser] = await db.update(users)
-    .set(updateData)
-    .where(eq(users.id, userId))
-    .returning();
+  try {
+    const [updatedUser] = await db.update(users)
+      .set(updateData)
+      .where(eq(users.id, userId))
+      .returning();
 
-  if (!updatedUser) {
-    return c.json({ message: "User not found" }, 404);
+    if (!updatedUser) {
+      return c.json({ message: "User not found" }, 404);
+    }
+
+    const { password: _, ...userWithoutPassword } = updatedUser;
+    return c.json(userWithoutPassword);
   }
-
-  const { password: _, ...userWithoutPassword } = updatedUser;
-  return c.json(userWithoutPassword);
+  catch (error) {
+    // Handle SQLite unique constraint violations
+    if (error instanceof Error && error.message.includes("UNIQUE constraint failed")) {
+      if (error.message.includes("user.email")) {
+        return c.json({ message: "Email already exists" }, 409);
+      }
+      if (error.message.includes("user.username")) {
+        return c.json({ message: "Username already exists" }, 409);
+      }
+      return c.json({ message: "User with this email or username already exists" }, 409);
+    }
+    throw error;
+  }
 };

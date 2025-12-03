@@ -7,6 +7,7 @@ export const EnvSchema = z.object({
   RABBITMQ_USER: z.string(),
   RABBITMQ_PASSWORD: z.string(),
   JWT_SECRET: z.string(),
+  CORS_ORIGIN: z.string().default("*"),
   SKIP_JOBS: z.union([z.boolean(), z.string()]).transform((val) => {
     if (typeof val === "boolean")
       return val;

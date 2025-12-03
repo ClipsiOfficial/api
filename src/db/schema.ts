@@ -20,7 +20,7 @@ export const users = sqliteTable("user", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   username: text("username", { length: 20 }).notNull().unique(),
   email: text("email", { length: 255 }).notNull().unique(),
-  password: text("password", { length: 255 }).notNull(),
+  password: text("password", { length: 60 }).notNull(),
   role: text("role", { enum: userRolesEnum }).notNull().default("user"),
   subscriptionId: integer("subscription").notNull().references(() => subscriptions.id),
 });
@@ -76,24 +76,21 @@ export const keywords = sqliteTable("keyword", {
 
 export const usersToProjects = sqliteTable("user_project", {
   userId: integer("user_id").references(() => users.id),
-  // Keeping column name 'project_members' from SQL but referencing projects.id
-  projectId: integer("project_members").references(() => projects.id),
+  projectId: integer("project_id").references(() => projects.id),
 }, t => ({
   pk: primaryKey({ columns: [t.userId, t.projectId] }),
 }));
 
 export const keywordsToNews = sqliteTable("keyword_news", {
   keywordId: integer("keyword_id").references(() => keywords.id),
-  // Keeping column name 'news_keywords' from SQL but referencing news.id
-  newsId: integer("news_keywords").references(() => news.id),
+  newsId: integer("news_id").references(() => news.id),
 }, t => ({
   pk: primaryKey({ columns: [t.keywordId, t.newsId] }),
 }));
 
 export const newsToSavedNews = sqliteTable("news_saved_news", {
   newsId: integer("news_id").references(() => news.id),
-  // Keeping column name 'saved_news_source_new' from SQL but referencing savedNews.id
-  savedNewsId: integer("saved_news_source_new").references(() => savedNews.id),
+  savedNewsId: integer("saved_news_id").references(() => savedNews.id),
 }, t => ({
   pk: primaryKey({ columns: [t.newsId, t.savedNewsId] }),
 }));
