@@ -3,6 +3,7 @@ import packageJson from "../package.json" assert { type: "json" };
 import { authMiddleware, errorHandler, notFoundHandler, validateEnv } from "./middleware";
 import { privateUserRouter, publicUserRouter } from "./routes/users/users.index";
 import { createRouter } from "./utils/functions";
+import { privateProjectRouter, publicProjectRouter } from "./routes/projects/projects.index";
 
 const app = createRouter();
 
@@ -11,11 +12,13 @@ app.use("*", validateEnv());
 
 const publicRoutes = [
   publicUserRouter,
+  publicProjectRouter,
   // Login, register, health, and other public routers can be added here ...
 ];
 
 const privateRoutes: typeof publicRoutes = [
   privateUserRouter,
+  privateProjectRouter,
   // Add private routers here
 ];
 
