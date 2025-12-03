@@ -1,8 +1,8 @@
 import type { Env as BindingsEnv } from "./utils/env";
 import { Scalar } from "@scalar/hono-api-reference";
 import packageJson from "../package.json" assert { type: "json" };
-import { privateNewsRouter } from "./routes/news/news.index";
 import { authMiddleware, corsMiddleware, errorHandler, notFoundHandler, validateEnv } from "./middleware";
+import { privateNewsRouter } from "./routes/news/news.index";
 import { privateUserRouter, publicUserRouter } from "./routes/users/users.index";
 import handleSchedulers from "./services/scheduler";
 import { createRouter } from "./utils/functions";
