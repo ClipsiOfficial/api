@@ -10,3 +10,10 @@ export const publicProjectRouter = createRouter();
 export const privateProjectRouter = createRouter();
 // cuando alguien accede a /projects, se mira si la peticion coincide con routes.createProject si es asi se ejecuta handlers.createProject
 privateProjectRouter.openapi(routes.createProject, handlers.createProject);
+privateProjectRouter.openapi(routes.deleteProject, handlers.deleteProject);
+privateProjectRouter.openapi(routes.getProjects, handlers.getUserProjects);
+privateProjectRouter.openapi(routes.getProject, handlers.getProject);
+privateProjectRouter.openapi(routes.updateProjectInfo, handlers.updateProjectInfo);
+privateProjectRouter.openapi(routes.addProjectMember, handlers.addMember);
+privateProjectRouter.openapi(routes.removeProjectMember, handlers.removeMember);
+
