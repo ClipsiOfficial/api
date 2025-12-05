@@ -1,6 +1,6 @@
 import { Scalar } from "@scalar/hono-api-reference";
 import packageJson from "../package.json" assert { type: "json" };
-import { authMiddleware, errorHandler, notFoundHandler, validateEnv } from "./middleware";
+import { authMiddleware, corsMiddleware, errorHandler, notFoundHandler, validateEnv } from "./middleware";
 import { privateUserRouter, publicUserRouter } from "./routes/users/users.index";
 import { createRouter } from "./utils/functions";
 import { privateProjectRouter, publicProjectRouter } from "./routes/projects/projects.index";
@@ -9,6 +9,8 @@ const app = createRouter();
 
 // Validate and parse environment variables for all routes
 app.use("*", validateEnv());
+
+app.use("*", corsMiddleware());
 
 const publicRoutes = [
   publicUserRouter,

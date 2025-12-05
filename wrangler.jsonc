@@ -10,7 +10,9 @@
     "production": {
       "vars": {
         "NODE_ENV": "production",
-        "CLOUDFLARE_DB_NAME": "clipsi"
+        "CLOUDFLARE_DB_NAME": "clipsi",
+        "CORS_ORIGIN": "https://clipsi.org",
+        "SKIP_JOBS": "false"
       },
       "d1_databases": [
         {
