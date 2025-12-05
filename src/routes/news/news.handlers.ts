@@ -2,7 +2,7 @@ import type { CreateNewsRoute, ExistsNewsRoute, GetNewsRoute, GetSavedNewsRoute,
 import type { AppRouteHandler } from "@/utils/types";
 import { and, desc, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { getDB } from "@/db";
-import { keywords, keywordsToNews, news, newsToSavedNews, savedNews } from "@/db/schema";
+import { keywords, keywordsToNews, news, savedNews } from "@/db/schema";
 
 export const createNews: AppRouteHandler<CreateNewsRoute> = async (c) => {
   const { keyword_id, rss_atom_id, url, title, summary, published_date } = c.req.valid("json");
@@ -61,12 +61,6 @@ export const saveNews: AppRouteHandler<SaveNewsRoute> = async (c) => {
       projectId,
       sourceNewId: originalNews.id,
     }).returning();
-
-    // 3. Link in the join table (optional but good for consistency if the table exists)
-    await db.insert(newsToSavedNews).values({
-      newsId: originalNews.id,
-      savedNewsId: newSavedNews.id,
-    });
 
     return c.json(newSavedNews, 201);
   }
@@ -150,7 +144,6 @@ export const getNews: AppRouteHandler<GetNewsRoute> = async (c) => {
       title: news.title,
       summary: news.summary,
       timestamp: news.timestamp,
-      keywords: news.keywords,
       rssAtomId: news.rssAtomId,
     })
     .from(news)

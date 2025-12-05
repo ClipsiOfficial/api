@@ -49,7 +49,6 @@ export const news = sqliteTable("news", {
   title: text("title").notNull(),
   summary: text("summary").default("no disponible"),
   timestamp: integer("timestamp", { mode: "timestamp" }).notNull(),
-  keywords: integer("keywords"),
   rssAtomId: integer("rss_atom").references(() => rssAtoms.id),
 });
 
@@ -88,13 +87,6 @@ export const keywordsToNews = sqliteTable("keyword_news", {
   newsId: integer("news_id").references(() => news.id),
 }, t => ([
   primaryKey({ columns: [t.keywordId, t.newsId] }),
-]));
-
-export const newsToSavedNews = sqliteTable("news_saved_news", {
-  newsId: integer("news_id").references(() => news.id),
-  savedNewsId: integer("saved_news_id").references(() => savedNews.id),
-}, t => ([
-  primaryKey({ columns: [t.newsId, t.savedNewsId] }),
 ]));
 
 // Relations
@@ -149,15 +141,13 @@ export const newsRelations = relations(news, ({ one, many }) => ({
     references: [rssAtoms.id],
   }),
   keywords: many(keywordsToNews),
-  savedNews: many(newsToSavedNews),
 }));
 
-export const savedNewsRelations = relations(savedNews, ({ one, many }) => ({
+export const savedNewsRelations = relations(savedNews, ({ one }) => ({
   project: one(projects, {
     fields: [savedNews.projectId],
     references: [projects.id],
   }),
-  news: many(newsToSavedNews),
 }));
 
 export const keywordsRelations = relations(keywords, ({ one, many }) => ({
@@ -176,17 +166,6 @@ export const keywordsToNewsRelations = relations(keywordsToNews, ({ one }) => ({
   news: one(news, {
     fields: [keywordsToNews.newsId],
     references: [news.id],
-  }),
-}));
-
-export const newsToSavedNewsRelations = relations(newsToSavedNews, ({ one }) => ({
-  news: one(news, {
-    fields: [newsToSavedNews.newsId],
-    references: [news.id],
-  }),
-  savedNews: one(savedNews, {
-    fields: [newsToSavedNews.savedNewsId],
-    references: [savedNews.id],
   }),
 }));
 
