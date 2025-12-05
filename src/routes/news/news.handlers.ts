@@ -1,4 +1,4 @@
-import type { CreateNewsRoute, ExistsNewsRoute, GetNewsRoute, GetSavedNewsRoute, SaveNewsRoute, UpdateSavedNewsRoute } from "./news.routes";
+import type { CreateNewsRoute, DeleteSavedNewsRoute, ExistsNewsRoute, GetNewsRoute, GetSavedNewsRoute, SaveNewsRoute, UpdateSavedNewsRoute } from "./news.routes";
 import type { AppRouteHandler } from "@/utils/types";
 import { and, desc, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { getDB } from "@/db";
@@ -217,4 +217,36 @@ export const getSavedNews: AppRouteHandler<GetSavedNewsRoute> = async (c) => {
     page,
     limit,
   });
+};
+
+export const deleteSavedNews: AppRouteHandler<DeleteSavedNewsRoute> = async (c) => {
+  const id = c.req.valid("param").id;
+  const db = getDB(c.env);
+  const jwt = c.get("jwtPayload");
+
+  if (!jwt) {
+    return c.json({ message: "Unauthorized" }, 401);
+  }
+
+  // 1. Get the saved news with its project
+  const savedNewsItem = await db.query.savedNews.findFirst({
+    where: eq(savedNews.id, id),
+    with: {
+      project: true,
+    },
+  });
+
+  if (!savedNewsItem) {
+    return c.json({ message: "Saved news not found" }, 404);
+  }
+
+  // 2. Check if the user is the project owner
+  if (savedNewsItem.project.ownerId !== jwt.id) {
+    return c.json({ message: "Forbidden - User is not the project owner" }, 403);
+  }
+
+  // 3. Delete the saved news
+  await db.delete(savedNews).where(eq(savedNews.id, id));
+
+  return c.body(null, 204);
 };

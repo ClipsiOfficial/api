@@ -258,9 +258,44 @@ export const getSavedNews = createRoute({
   },
 });
 
+// Delete Saved News Route
+export const deleteSavedNews = createRoute({
+  method: "delete",
+  path: "/saved-news/{id}",
+  description: "Delete a saved news entry",
+  summary: "Delete a saved news entry if the user is the project owner",
+  tags: ["News"],
+  request: {
+    headers: z.object({
+      Authorization: z.string().openapi({
+        param: { name: "Authorization", in: "header" },
+        description: "Bearer access token",
+      }),
+    }),
+    params: z.object({
+      id: z.string().transform(v => Number(v)),
+    }),
+  },
+  responses: {
+    204: {
+      description: "Saved news deleted successfully",
+    },
+    401: {
+      description: "Unauthorized",
+    },
+    403: {
+      description: "Forbidden - User is not the project owner",
+    },
+    404: {
+      description: "Saved news not found",
+    },
+  },
+});
+
 export type CreateNewsRoute = typeof createNews;
 export type SaveNewsRoute = typeof saveNews;
 export type UpdateSavedNewsRoute = typeof updateSavedNews;
 export type GetNewsRoute = typeof getNews;
 export type ExistsNewsRoute = typeof existsNews;
 export type GetSavedNewsRoute = typeof getSavedNews;
+export type DeleteSavedNewsRoute = typeof deleteSavedNews;
