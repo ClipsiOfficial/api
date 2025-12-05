@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "scripts": {
     "start": "wrangler dev",
-    "db:setup": "mkdir -p .wrangler/state/v3/d1/miniflare-D1DatabaseObject && touch .wrangler/state/v3/d1/miniflare-D1DatabaseObject/626f94dc3f5df36314f9f96e8d9a65a79b8477532bde6ba286c1ce0b7d42e990.sqlite && drizzle-kit push && pnpm db:seed",
+    "db:setup": "tsx scripts/db-setup.ts",
     "db:seed": "tsx scripts/seed.ts",
     "db:seed:prod": "NODE_ENV=production tsx scripts/seed.ts",
     "db:push": "drizzle-kit push",
