@@ -2,11 +2,11 @@ import type { CreateProjectRoute, DeleteProjectRoute, GetProjectsRoute, GetProje
 import type { AppRouteHandler } from "@/utils/types";
 import { compare, hash } from "bcryptjs";
 
-import { eq , SQL, sql } from "drizzle-orm";
+import { eq , SQL, sql, inArray } from "drizzle-orm";
 import { sign } from "hono/jwt";
 
 import { getDB } from "@/db";
-import { projects, users, usersToProjects } from "@/db/schema";
+import { projects, users, usersToProjects , keywords, keywordsToNews, news, savedNews, subscriptions} from "@/db/schema";
 
 
 // Create project
@@ -27,7 +27,16 @@ export const createProject: AppRouteHandler<CreateProjectRoute> = async (c) => {
   // If no user found, return 404
   if (!userRequest) return c.json({ message: "User not found" }, 404);
 
-  const projectLimit = userRequest.subscriptionId === 1 ? 1 : 6;
+  const subscription = await db.query.subscriptions.findFirst({
+  where: eq(subscriptions.id, userRequest.subscriptionId)
+  });
+
+  if (!subscription) {
+    return c.json({ message: "Subscription not found" }, 404);
+  }
+
+  // Subscription project limit
+  const projectLimit = subscription.projectLimit;
 
   const { count: ownedCount } = (await db
   .select({ count: sql<number>`count(*)` })
@@ -53,6 +62,15 @@ export const createProject: AppRouteHandler<CreateProjectRoute> = async (c) => {
   ownerId: userRequest.id,
   } ).returning();
 
+  if (Array.isArray(body.keywords)) {
+  const keywordsToInsert = body.keywords.map((content: string) => ({
+    content,
+    projectId: newProject.id,
+  }));
+
+  await db.insert(keywords).values(keywordsToInsert);
+  }
+
   // Return to frontend the new project and the 201 status code(created)
   return c.json(newProject, 201);
 };
@@ -75,6 +93,23 @@ export const deleteProject: AppRouteHandler<DeleteProjectRoute> = async (c) => {
   if (project.ownerId !== payload.sub) {
     return c.json({ message: "You are not the owner of this project" }, 403);
   }
+
+  // get project keywords
+  const projectKeywords = await db.query.keywords.findMany({
+    where: eq(keywords.projectId, id),
+  });
+
+  const keywordIds = projectKeywords.map(k => k.id);
+
+  // Eliminar las relaciones de keywordsToNews asociadas a las keywords del proyecto
+  if (keywordIds.length > 0) {
+    await db
+      .delete(keywordsToNews)
+      .where(inArray(keywordsToNews.keywordId, keywordIds));
+  }
+
+  // Eliminar las keywords del proyecto
+  await db.delete(keywords).where(eq(keywords.projectId, id));
 
   // Eliminar el proyecto
   await db.delete(projects).where(eq(projects.id, id));
@@ -225,16 +260,8 @@ export const addMember: AppRouteHandler<AddProjectMemberRoute> = async (c) => {
     userId: newMemberId,
     projectId,
   });
-  
-  const [updatedProject] = await db
-      .update(projects)
-      .set({
-        members: (project.members ?? 0) + 1,
-      })
-      .where(eq(projects.id, projectId))
-      .returning();
 
-  return c.json(updatedProject, 200);
+  return c.json("Member added succesfuly", 200);
 };
 
 export const removeMember: AppRouteHandler<RemoveProjectMemberRoute> = async (c) => {
@@ -271,16 +298,7 @@ export const removeMember: AppRouteHandler<RemoveProjectMemberRoute> = async (c)
     eq(usersToProjects.projectId, projectId)
   ));
 
-  // Decrementar contador de members
-  const [updatedProject] = await db
-    .update(projects)
-    .set({
-      members: Math.max((project.members ?? 1) - 1, 0),
-    })
-    .where(eq(projects.id, projectId))
-    .returning();
-
-  return c.json(updatedProject, 200);
+  return c.json("Member removed succesfuly", 200);
 };
 
 

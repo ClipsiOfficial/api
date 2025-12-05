@@ -16,7 +16,11 @@ export const createProject = createRoute({
     body: {
       content: {
         "application/json": {
-          schema: insertProjectSchema.omit({ id: true }),
+          schema: insertProjectSchema
+            .omit({ id: true , members: true , ownerId: true })
+            .extend({
+              keywords: z.array(z.string()).optional(),
+            }),
         },
       },
     },
