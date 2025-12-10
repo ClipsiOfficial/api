@@ -2,7 +2,7 @@ import type { CreateProjectRoute, DeleteProjectRoute, GetProjectsRoute, GetProje
 import type { AppRouteHandler } from "@/utils/types";
 import { compare, hash } from "bcryptjs";
 
-import { eq , SQL, sql, inArray } from "drizzle-orm";
+import { eq , SQL, and, sql, inArray } from "drizzle-orm";
 import { sign } from "hono/jwt";
 
 import { getDB } from "@/db";
@@ -224,6 +224,36 @@ export const updateProjectInfo: AppRouteHandler<UpdateProjectInfoRoute> = async 
   return c.json(updated, 200);
 };
 
+export const getProjectMembers: AppRouteHandler<GetProjectRoute> = async (c) => {
+  const payload = c.get("jwtPayload");
+  if (!payload) return c.json({ message: "Unauthorized" }, 401);
+
+  const db = getDB(c.env);
+  const projectId = c.req.valid("param").id;
+
+  // Verify project exists
+  const project = await db.query.projects.findFirst({ where: eq(projects.id, projectId) });
+  if (!project) return c.json({ message: "Project not found" }, 404);
+
+  const userId = payload.sub;
+  // Only owner or project members can view member list
+  let allowed = project.ownerId === userId;
+  if (!allowed) {
+    const member = await db.query.usersToProjects.findFirst({ where: eq(usersToProjects.userId, userId) });
+    allowed = !!member;
+  }
+  if (!allowed) return c.json({ message: "Forbidden" }, 403);
+
+  const rows = await db
+    .select({ user: users })
+    .from(usersToProjects)
+    .innerJoin(users, eq(users.id, usersToProjects.userId))
+    .where(eq(usersToProjects.projectId, projectId));
+
+  const members = rows.map(r => r.user);
+  return c.json(members, 200);
+};
+
 export const addMember: AppRouteHandler<AddProjectMemberRoute> = async (c) => {
   const payload = c.get("jwtPayload");
   if (!payload) return c.json({ message: "Unauthorized" }, 401);
@@ -231,8 +261,22 @@ export const addMember: AppRouteHandler<AddProjectMemberRoute> = async (c) => {
   const userId = payload.sub;
   const db = getDB(c.env);
   const projectId = c.req.valid("param").id;
-  // User ID has de id of the new member to add
-  const { userId: newMemberId } = c.req.valid("json");
+  // Accept both userId and email
+  const body = c.req.valid("json");
+  let newMemberId: number;
+
+  // If email is provided, find the user by email
+  if ('email' in body && body.email) {
+    const newMember = await db.query.users.findFirst({
+      where: eq(users.email, body.email as string),
+    });
+    if (!newMember) return c.json({ message: "User does not exist" }, 400);
+    newMemberId = newMember.id;
+  } else if ('userId' in body && body.userId) {
+    newMemberId = body.userId as number;
+  } else {
+    return c.json({ message: "Either userId or email is required" }, 400);
+  }
 
   const project = await db.query.projects.findFirst({
     where: eq(projects.id, projectId),
@@ -253,7 +297,7 @@ export const addMember: AppRouteHandler<AddProjectMemberRoute> = async (c) => {
     where: eq(usersToProjects.userId, newMemberId),
   });
   if (existing) return c.json({ message: "User already a member" }, 400);
-  if (project.ownerId === userId) return c.json({ message: "User already a member" }, 400);
+  if (project.ownerId === newMemberId) return c.json({ message: "User already a member" }, 400);
   
   // Add the new member
   await db.insert(usersToProjects).values({
@@ -302,7 +346,5 @@ export const removeMember: AppRouteHandler<RemoveProjectMemberRoute> = async (c)
 };
 
 
-function and(arg0: SQL<unknown>, arg1: SQL<unknown>): import("drizzle-orm").SQL<unknown> | undefined {
-  throw new Error("Function not implemented.");
-}
+
 

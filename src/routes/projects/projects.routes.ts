@@ -1,5 +1,5 @@
 import { createRoute, z } from "@hono/zod-openapi";
-import { insertProjectSchema, selectProjectSchema } from "@/db/schema";
+import { insertProjectSchema, selectProjectSchema, selectUserSchema } from "@/db/schema";
 
 
 // Create a project
@@ -181,6 +181,35 @@ export const addProjectMember = createRoute({
   responses: {
     200: { description: "Member added" },
     400: { description: "User already a member or does not exist" },
+    401: { description: "Unauthorized" },
+    403: { description: "Forbidden" },
+    404: { description: "Project not found" },
+  },
+});
+
+export const getProjectMembers = createRoute({
+  method: "get",
+  path: "/projects/{id}/members",
+  description: "Get members of a project",
+  request: {
+    headers: z.object({
+      Authorization: z.string().openapi({
+        param: { name: "Authorization", in: "header" },
+      }),
+    }),
+    params: z.object({
+      id: z.string().transform(Number),
+    }),
+  },
+  responses: {
+    200: {
+      description: "List of users",
+      content: {
+        "application/json": {
+          schema: z.array(selectUserSchema.omit({ password: true })),
+        },
+      },
+    },
     401: { description: "Unauthorized" },
     403: { description: "Forbidden" },
     404: { description: "Project not found" },
