@@ -28,7 +28,7 @@ async function seed() {
     // IMPORTANTE: Incluimos 'name' y 'price' en subscription para cumplir con el NOT NULL de tu schema.ts
     const sqlContent = `
       -- Crear suscripción por defecto si no existe
-      INSERT OR IGNORE INTO subscription (id, name, price) VALUES (1, 'Plan Admin', 0);
+      INSERT OR IGNORE INTO subscription (id, name, price, project_limit) VALUES (1, 'Plan Admin', 0, 1000);
 
       -- Crear usuario Admin
       INSERT OR IGNORE INTO user (username, email, password, role, subscription) 
