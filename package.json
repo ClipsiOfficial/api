@@ -22,7 +22,7 @@
     "@scalar/hono-api-reference": "^0.9.24",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.2.3",
-    "drizzle-orm": "^0.44.7",
+    "drizzle-orm": "^0.45.1",
     "drizzle-zod": "^0.8.3",
     "hono": "^4.10.5",
     "zod": "^4.1.12"
