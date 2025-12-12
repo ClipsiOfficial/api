@@ -6,6 +6,8 @@ import { privateNewsRouter } from "./routes/news/news.index";
 import { privateUserRouter, publicUserRouter } from "./routes/users/users.index";
 import handleSchedulers from "./services/scheduler";
 import { createRouter } from "./utils/functions";
+import { privateProjectRouter, publicProjectRouter } from "./routes/projects/projects.index";
+import { publicKeywordRouter, privateKeywordRouter } from "./routes/keywords/keywords.index"
 
 const app = createRouter();
 
@@ -16,11 +18,15 @@ app.use("*", corsMiddleware());
 
 const publicRoutes = [
   publicUserRouter,
+  publicProjectRouter,
+  publicKeywordRouter,
   // Login, register, health, and other public routers can be added here ...
 ];
 
 const privateRoutes: typeof publicRoutes = [
   privateUserRouter,
+  privateProjectRouter,
+  privateKeywordRouter,
   privateNewsRouter,
   // Add private routers here
 ];
