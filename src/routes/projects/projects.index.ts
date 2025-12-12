@@ -16,5 +16,4 @@ privateProjectRouter.openapi(routes.getProject, handlers.getProject);
 privateProjectRouter.openapi(routes.updateProjectInfo, handlers.updateProjectInfo);
 privateProjectRouter.openapi(routes.addProjectMember, handlers.addMember);
 privateProjectRouter.openapi(routes.removeProjectMember, handlers.removeMember);
-
-
+privateProjectRouter.openapi(routes.getProjectMembers, handlers.getProjectMembers);

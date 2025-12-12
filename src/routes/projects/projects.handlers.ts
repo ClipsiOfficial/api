@@ -1,19 +1,17 @@
-import type { CreateProjectRoute, DeleteProjectRoute, GetProjectsRoute, GetProjectRoute, UpdateProjectInfoRoute, AddProjectMemberRoute, RemoveProjectMemberRoute } from "./projects.routes";
+import type { AddProjectMemberRoute, CreateProjectRoute, DeleteProjectRoute, GetProjectMembersRoute, GetProjectRoute, GetProjectsRoute, RemoveProjectMemberRoute, UpdateProjectInfoRoute } from "./projects.routes";
 import type { AppRouteHandler } from "@/utils/types";
-import { compare, hash } from "bcryptjs";
 
-import { eq , SQL, and, sql, inArray } from "drizzle-orm";
-import { sign } from "hono/jwt";
+import { and, eq, inArray, sql } from "drizzle-orm";
 
 import { getDB } from "@/db";
-import { projects, users, usersToProjects , keywords, keywordsToNews, news, savedNews, subscriptions} from "@/db/schema";
-
+import { keywords, keywordsToNews, projects, savedNews, subscriptions, users, usersToProjects } from "@/db/schema";
 
 // Create project
 export const createProject: AppRouteHandler<CreateProjectRoute> = async (c) => {
   // Authenticate user
   const payload = c.get("jwtPayload");
-  if (!payload) return c.json({ message: "Unauthorized" }, 401);
+  if (!payload)
+    return c.json({ message: "Unauthorized" }, 401);
 
   // Get request data and get DB instance
   const body = c.req.valid("json");
@@ -25,10 +23,11 @@ export const createProject: AppRouteHandler<CreateProjectRoute> = async (c) => {
   });
 
   // If no user found, return 404
-  if (!userRequest) return c.json({ message: "User not found" }, 404);
+  if (!userRequest)
+    return c.json({ message: "User not found" }, 404);
 
   const subscription = await db.query.subscriptions.findFirst({
-  where: eq(subscriptions.id, userRequest.subscriptionId)
+    where: eq(subscriptions.id, userRequest.subscriptionId),
   });
 
   if (!subscription) {
@@ -39,15 +38,15 @@ export const createProject: AppRouteHandler<CreateProjectRoute> = async (c) => {
   const projectLimit = subscription.projectLimit;
 
   const { count: ownedCount } = (await db
-  .select({ count: sql<number>`count(*)` })
-  .from(projects)
-  .where(eq(projects.ownerId, userRequest.id))
+    .select({ count: sql<number>`count(*)` })
+    .from(projects)
+    .where(eq(projects.ownerId, userRequest.id))
   )[0];
 
   const { count: memberCount } = (await db
-  .select({ count: sql<number>`count(*)` })
-  .from(usersToProjects)
-  .where(eq(usersToProjects.userId, userRequest.id))
+    .select({ count: sql<number>`count(*)` })
+    .from(usersToProjects)
+    .where(eq(usersToProjects.userId, userRequest.id))
   )[0];
 
   const currentProjects = ownedCount + memberCount;
@@ -56,19 +55,19 @@ export const createProject: AppRouteHandler<CreateProjectRoute> = async (c) => {
     return c.json({ message: "Project limit reached for your plan" }, 403);
   }
 
-  // Insert new project into the database and assign the ownerId 
+  // Insert new project into the database and assign the ownerId
   const [newProject] = await db.insert(projects).values({
-  ...body,
-  ownerId: userRequest.id,
-  } ).returning();
+    ...body,
+    ownerId: userRequest.id,
+  }).returning();
 
   if (Array.isArray(body.keywords)) {
-  const keywordsToInsert = body.keywords.map((content: string) => ({
-    content,
-    projectId: newProject.id,
-  }));
+    const keywordsToInsert = body.keywords.map((content: string) => ({
+      content,
+      projectId: newProject.id,
+    }));
 
-  await db.insert(keywords).values(keywordsToInsert);
+    await db.insert(keywords).values(keywordsToInsert);
   }
 
   // Return to frontend the new project and the 201 status code(created)
@@ -77,7 +76,8 @@ export const createProject: AppRouteHandler<CreateProjectRoute> = async (c) => {
 
 export const deleteProject: AppRouteHandler<DeleteProjectRoute> = async (c) => {
   const payload = c.get("jwtPayload");
-  if (!payload) return c.json({ message: "Unauthorized" }, 401);
+  if (!payload)
+    return c.json({ message: "Unauthorized" }, 401);
 
   const db = getDB(c.env);
   const id = c.req.valid("param").id;
@@ -87,7 +87,8 @@ export const deleteProject: AppRouteHandler<DeleteProjectRoute> = async (c) => {
     where: eq(projects.id, id),
   });
 
-  if (!project) return c.json({ message: "Project not found" }, 404);
+  if (!project)
+    return c.json({ message: "Project not found" }, 404);
 
   // Verificar si es el owner
   if (project.ownerId !== payload.sub) {
@@ -114,15 +115,21 @@ export const deleteProject: AppRouteHandler<DeleteProjectRoute> = async (c) => {
   // Eliminar el proyecto
   await db.delete(projects).where(eq(projects.id, id));
 
+  // Eliminar las relaciones de usersToProjects asociadas al proyecto
+  await db.delete(usersToProjects).where(eq(usersToProjects.projectId, id));
+
+  // Delete saved news related to the project
+  await db.delete(savedNews).where(eq(savedNews.projectId, id));
+
   return c.json({ message: "Project deleted successfully" }, 200);
 };
-
 
 // Get all projects for the logged user
 export const getUserProjects: AppRouteHandler<GetProjectsRoute> = async (c) => {
   // Authenticate user
   const payload = c.get("jwtPayload");
-  if (!payload) return c.json({ message: "Unauthorized" }, 401);
+  if (!payload)
+    return c.json({ message: "Unauthorized" }, 401);
 
   const db = getDB(c.env);
 
@@ -131,16 +138,15 @@ export const getUserProjects: AppRouteHandler<GetProjectsRoute> = async (c) => {
     where: eq(projects.ownerId, payload.sub),
   });
 
-
   const memberRows = await db
     .select({
-      project: projects,  // get the projects columns
+      project: projects, // get the projects columns
     })
     .from(usersToProjects)
     .innerJoin(projects, eq(projects.id, usersToProjects.projectId))
     .where(eq(usersToProjects.userId, payload.sub));
 
-  const member = memberRows.map((r) => r.project);
+  const member = memberRows.map(r => r.project);
 
   // Join with no duplicates
   const allProjects = [...owned, ...member];
@@ -150,7 +156,8 @@ export const getUserProjects: AppRouteHandler<GetProjectsRoute> = async (c) => {
 
 export const getProject: AppRouteHandler<GetProjectRoute> = async (c) => {
   const payload = c.get("jwtPayload");
-  if (!payload) return c.json({ message: "Unauthorized" }, 401);
+  if (!payload)
+    return c.json({ message: "Unauthorized" }, 401);
 
   const db = getDB(c.env);
   const id = c.req.valid("param").id;
@@ -160,7 +167,8 @@ export const getProject: AppRouteHandler<GetProjectRoute> = async (c) => {
     where: eq(projects.id, id),
   });
 
-  if (!project) return c.json({ message: "Project not found" }, 404);
+  if (!project)
+    return c.json({ message: "Project not found" }, 404);
 
   const userId = payload.sub;
 
@@ -184,7 +192,8 @@ export const getProject: AppRouteHandler<GetProjectRoute> = async (c) => {
 export const updateProjectInfo: AppRouteHandler<UpdateProjectInfoRoute> = async (c) => {
   // Authenticate user
   const payload = c.get("jwtPayload");
-  if (!payload) return c.json({ message: "Unauthorized" }, 401);
+  if (!payload)
+    return c.json({ message: "Unauthorized" }, 401);
 
   const db = getDB(c.env);
   const id = c.req.valid("param").id;
@@ -195,7 +204,8 @@ export const updateProjectInfo: AppRouteHandler<UpdateProjectInfoRoute> = async 
     where: eq(projects.id, id),
   });
 
-  if (!project) return c.json({ message: "Project not found" }, 404);
+  if (!project)
+    return c.json({ message: "Project not found" }, 404);
 
   const userId = payload.sub;
   let validUser = project.ownerId === userId;
@@ -212,7 +222,7 @@ export const updateProjectInfo: AppRouteHandler<UpdateProjectInfoRoute> = async 
   }
 
   // Actualizar solo name y description
-   const [updated] = await db
+  const [updated] = await db
     .update(projects)
     .set({
       ...(body.name !== undefined ? { name: body.name } : {}),
@@ -224,16 +234,18 @@ export const updateProjectInfo: AppRouteHandler<UpdateProjectInfoRoute> = async 
   return c.json(updated, 200);
 };
 
-export const getProjectMembers: AppRouteHandler<GetProjectRoute> = async (c) => {
+export const getProjectMembers: AppRouteHandler<GetProjectMembersRoute> = async (c) => {
   const payload = c.get("jwtPayload");
-  if (!payload) return c.json({ message: "Unauthorized" }, 401);
+  if (!payload)
+    return c.json({ message: "Unauthorized" }, 401);
 
   const db = getDB(c.env);
   const projectId = c.req.valid("param").id;
 
   // Verify project exists
   const project = await db.query.projects.findFirst({ where: eq(projects.id, projectId) });
-  if (!project) return c.json({ message: "Project not found" }, 404);
+  if (!project)
+    return c.json({ message: "Project not found" }, 404);
 
   const userId = payload.sub;
   // Only owner or project members can view member list
@@ -242,7 +254,8 @@ export const getProjectMembers: AppRouteHandler<GetProjectRoute> = async (c) => 
     const member = await db.query.usersToProjects.findFirst({ where: eq(usersToProjects.userId, userId) });
     allowed = !!member;
   }
-  if (!allowed) return c.json({ message: "Forbidden" }, 403);
+  if (!allowed)
+    return c.json({ message: "Forbidden" }, 403);
 
   const rows = await db
     .select({ user: users })
@@ -256,7 +269,8 @@ export const getProjectMembers: AppRouteHandler<GetProjectRoute> = async (c) => 
 
 export const addMember: AppRouteHandler<AddProjectMemberRoute> = async (c) => {
   const payload = c.get("jwtPayload");
-  if (!payload) return c.json({ message: "Unauthorized" }, 401);
+  if (!payload)
+    return c.json({ message: "Unauthorized" }, 401);
 
   const userId = payload.sub;
   const db = getDB(c.env);
@@ -266,51 +280,55 @@ export const addMember: AppRouteHandler<AddProjectMemberRoute> = async (c) => {
   let newMemberId: number;
 
   // If email is provided, find the user by email
-  if ('email' in body && body.email) {
+  if ("email" in body && body.email) {
     const newMember = await db.query.users.findFirst({
       where: eq(users.email, body.email as string),
     });
-    if (!newMember) return c.json({ message: "User does not exist" }, 400);
+    if (!newMember)
+      return c.json({ message: "User does not exist" }, 400);
     newMemberId = newMember.id;
-  } else if ('userId' in body && body.userId) {
-    newMemberId = body.userId as number;
-  } else {
-    return c.json({ message: "Either userId or email is required" }, 400);
+  }
+  else {
+    return c.json({ message: "Email field is required" }, 400);
   }
 
   const project = await db.query.projects.findFirst({
     where: eq(projects.id, projectId),
   });
-  if (!project) return c.json({ message: "Project not found" }, 404);
+  if (!project)
+    return c.json({ message: "Project not found" }, 404);
 
   // Just the owner can add members
-  if (project.ownerId !== userId) return c.json({ message: "Forbidden" }, 403);
+  if (project.ownerId !== userId)
+    return c.json({ message: "Forbidden" }, 403);
 
   // Verify the new member exists
   const newMember = await db.query.users.findFirst({
     where: eq(users.id, newMemberId),
   });
-  if (!newMember) return c.json({ message: "User does not exist" }, 400);
+  if (!newMember)
+    return c.json({ message: "User does not exist" }, 400);
 
   // Verifiy if the user is already a member
   const existing = await db.query.usersToProjects.findFirst({
     where: eq(usersToProjects.userId, newMemberId),
   });
-  if (existing) return c.json({ message: "User already a member" }, 400);
-  if (project.ownerId === newMemberId) return c.json({ message: "User already a member" }, 400);
-  
+  if (existing || project.ownerId === newMemberId)
+    return c.json({ message: "User already a member" }, 400);
+
   // Add the new member
   await db.insert(usersToProjects).values({
     userId: newMemberId,
     projectId,
   });
 
-  return c.json("Member added succesfuly", 200);
+  return c.json("Member added successfully", 200);
 };
 
 export const removeMember: AppRouteHandler<RemoveProjectMemberRoute> = async (c) => {
   const payload = c.get("jwtPayload");
-  if (!payload) return c.json({ message: "Unauthorized" }, 401);
+  if (!payload)
+    return c.json({ message: "Unauthorized" }, 401);
 
   const ownerId = payload.sub;
   const db = getDB(c.env);
@@ -321,30 +339,30 @@ export const removeMember: AppRouteHandler<RemoveProjectMemberRoute> = async (c)
   const project = await db.query.projects.findFirst({
     where: eq(projects.id, projectId),
   });
-  if (!project) return c.json({ message: "Project not found" }, 404);
+  if (!project)
+    return c.json({ message: "Project not found" }, 404);
 
   // Solo owner puede eliminar miembros
-  if (project.ownerId !== ownerId) return c.json({ message: "Forbidden" }, 403);
+  if (project.ownerId !== ownerId)
+    return c.json({ message: "Forbidden" }, 403);
 
   // El owner no puede eliminarse a sí mismo
-  if (memberId === ownerId) return c.json({ message: "Cannot remove owner" }, 400);
+  if (memberId === ownerId)
+    return c.json({ message: "Cannot remove owner" }, 400);
 
   // Verificar que el usuario sea miembro
   const member = await db.query.usersToProjects.findFirst({
     where: eq(usersToProjects.userId, memberId),
   });
-  if (!member) return c.json({ message: "User not a member" }, 400);
+  if (!member)
+    return c.json({ message: "User not a member" }, 400);
 
   // Eliminar miembro
   await db.delete(usersToProjects)
     .where(and(
-    eq(usersToProjects.userId, memberId),
-    eq(usersToProjects.projectId, projectId)
-  ));
+      eq(usersToProjects.userId, memberId),
+      eq(usersToProjects.projectId, projectId),
+    ));
 
   return c.json("Member removed succesfuly", 200);
 };
-
-
-
-

@@ -1,7 +1,6 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { insertProjectSchema, selectProjectSchema, selectUserSchema } from "@/db/schema";
 
-
 // Create a project
 export const createProject = createRoute({
   method: "post",
@@ -17,7 +16,7 @@ export const createProject = createRoute({
       content: {
         "application/json": {
           schema: insertProjectSchema
-            .omit({ id: true , members: true , ownerId: true })
+            .omit({ id: true, members: true, ownerId: true })
             .extend({
               keywords: z.array(z.string()).optional(),
             }),
@@ -172,7 +171,7 @@ export const addProjectMember = createRoute({
       content: {
         "application/json": {
           schema: z.object({
-            userId: z.number(),
+            email: z.email(),
           }),
         },
       },
@@ -248,6 +247,7 @@ export const removeProjectMember = createRoute({
   },
 });
 
+export type GetProjectMembersRoute = typeof getProjectMembers;
 export type RemoveProjectMemberRoute = typeof removeProjectMember;
 export type AddProjectMemberRoute = typeof addProjectMember;
 export type UpdateProjectInfoRoute = typeof updateProjectInfo;
