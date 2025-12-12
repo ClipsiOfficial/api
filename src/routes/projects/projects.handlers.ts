@@ -275,7 +275,6 @@ export const addMember: AppRouteHandler<AddProjectMemberRoute> = async (c) => {
   const userId = payload.sub;
   const db = getDB(c.env);
   const projectId = c.req.valid("param").id;
-  // Accept both userId and email
   const body = c.req.valid("json");
   let newMemberId: number;
 
