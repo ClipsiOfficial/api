@@ -21,11 +21,11 @@ importers:
         specifier: ^17.2.3
         version: 17.2.3
       drizzle-orm:
-        specifier: ^0.44.7
-        version: 0.44.7(@cloudflare/workers-types@4.20251109.0)(@libsql/client@0.15.15)
+        specifier: ^0.45.1
+        version: 0.45.1(@cloudflare/workers-types@4.20251109.0)(@libsql/client@0.15.15)
       drizzle-zod:
         specifier: ^0.8.3
-        version: 0.8.3(drizzle-orm@0.44.7(@cloudflare/workers-types@4.20251109.0)(@libsql/client@0.15.15))(zod@4.1.12)
+        version: 0.8.3(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20251109.0)(@libsql/client@0.15.15))(zod@4.1.12)
       hono:
         specifier: ^4.10.5
         version: 4.10.5
@@ -1448,8 +1448,8 @@ packages:
       sqlite3:
         optional: true
 
-  drizzle-orm@0.44.7:
-    resolution: {integrity: sha512-quIpnYznjU9lHshEOAYLoZ9s3jweleHlZIAWR/jX9gAWNg/JhQ1wj0KGRf7/Zm+obRrYd9GjPVJg790QY9N5AQ==}
+  drizzle-orm@0.45.1:
+    resolution: {integrity: sha512-Te0FOdKIistGNPMq2jscdqngBRfBpC8uMFVwqjf6gtTVJHIQ/dosgV/CLBU2N4ZJBsXL5savCba9b0YJskKdcA==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
       '@cloudflare/workers-types': '>=4'
@@ -3844,14 +3844,14 @@ snapshots:
       '@cloudflare/workers-types': 4.20251109.0
       '@libsql/client': 0.15.15
 
-  drizzle-orm@0.44.7(@cloudflare/workers-types@4.20251109.0)(@libsql/client@0.15.15):
+  drizzle-orm@0.45.1(@cloudflare/workers-types@4.20251109.0)(@libsql/client@0.15.15):
     optionalDependencies:
       '@cloudflare/workers-types': 4.20251109.0
       '@libsql/client': 0.15.15
 
-  drizzle-zod@0.8.3(drizzle-orm@0.44.7(@cloudflare/workers-types@4.20251109.0)(@libsql/client@0.15.15))(zod@4.1.12):
+  drizzle-zod@0.8.3(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20251109.0)(@libsql/client@0.15.15))(zod@4.1.12):
     dependencies:
-      drizzle-orm: 0.44.7(@cloudflare/workers-types@4.20251109.0)(@libsql/client@0.15.15)
+      drizzle-orm: 0.45.1(@cloudflare/workers-types@4.20251109.0)(@libsql/client@0.15.15)
       zod: 4.1.12
 
   dunder-proto@1.0.1:

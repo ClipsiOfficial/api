@@ -14,6 +14,7 @@ export const subscriptions = sqliteTable("subscription", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name", { length: 20 }).notNull(),
   price: real("price").notNull(),
+  projectLimit: integer("project_limit").notNull(),
 });
 
 export const users = sqliteTable("user", {

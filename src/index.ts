@@ -3,6 +3,8 @@ import packageJson from "../package.json" assert { type: "json" };
 import { authMiddleware, corsMiddleware, errorHandler, notFoundHandler, validateEnv } from "./middleware";
 import { privateUserRouter, publicUserRouter } from "./routes/users/users.index";
 import { createRouter } from "./utils/functions";
+import { privateProjectRouter, publicProjectRouter } from "./routes/projects/projects.index";
+import { publicKeywordRouter, privateKeywordRouter } from "./routes/keywords/keywords.index"
 
 const app = createRouter();
 
@@ -13,11 +15,15 @@ app.use("*", corsMiddleware());
 
 const publicRoutes = [
   publicUserRouter,
+  publicProjectRouter,
+  publicKeywordRouter,
   // Login, register, health, and other public routers can be added here ...
 ];
 
 const privateRoutes: typeof publicRoutes = [
   privateUserRouter,
+  privateProjectRouter,
+  privateKeywordRouter,
   // Add private routers here
 ];
 
