@@ -95,31 +95,31 @@ export const deleteProject: AppRouteHandler<DeleteProjectRoute> = async (c) => {
     return c.json({ message: "You are not the owner of this project" }, 403);
   }
 
-  // get project keywords
+  // 1. Eliminar las relaciones de usersToProjects primero
+  await db.delete(usersToProjects).where(eq(usersToProjects.projectId, id));
+
+  // 2. Eliminar savedNews asociadas al proyecto
+  await db.delete(savedNews).where(eq(savedNews.projectId, id));
+
+  // 3. Obtener keywords del proyecto
   const projectKeywords = await db.query.keywords.findMany({
     where: eq(keywords.projectId, id),
   });
 
   const keywordIds = projectKeywords.map(k => k.id);
 
-  // Eliminar las relaciones de keywordsToNews asociadas a las keywords del proyecto
+  // 4. Eliminar las relaciones keywordsToNews
   if (keywordIds.length > 0) {
     await db
       .delete(keywordsToNews)
       .where(inArray(keywordsToNews.keywordId, keywordIds));
   }
 
-  // Eliminar las keywords del proyecto
+  // 5. Eliminar las keywords del proyecto
   await db.delete(keywords).where(eq(keywords.projectId, id));
 
-  // Eliminar el proyecto
+  // 6. Finalmente, eliminar el proyecto
   await db.delete(projects).where(eq(projects.id, id));
-
-  // Eliminar las relaciones de usersToProjects asociadas al proyecto
-  await db.delete(usersToProjects).where(eq(usersToProjects.projectId, id));
-
-  // Delete saved news related to the project
-  await db.delete(savedNews).where(eq(savedNews.projectId, id));
 
   return c.json({ message: "Project deleted successfully" }, 200);
 };
