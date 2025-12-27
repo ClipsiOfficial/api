@@ -6,6 +6,7 @@ export const createProject = createRoute({
   method: "post",
   path: "/projects",
   description: "Create a new project",
+  tags: ["Project"],
   request: {
     headers: z.object({
       Authorization: z.string().openapi({
@@ -41,6 +42,7 @@ export const deleteProject = createRoute({
   method: "delete",
   path: "/projects/{id}",
   description: "Delete a project",
+  tags: ["Project"],
   request: {
     headers: z.object({
       Authorization: z.string().openapi({
@@ -73,6 +75,7 @@ export const getProjects = createRoute({
   method: "get",
   path: "/projects",
   description: "Get all projects for the logged user",
+  tags: ["Project"],
   request: {
     headers: z.object({
       Authorization: z.string().openapi({
@@ -97,6 +100,7 @@ export const getProject = createRoute({
   method: "get",
   path: "/projects/{id}",
   description: "Get a project by ID",
+  tags: ["Project"],
   request: {
     headers: z.object({
       Authorization: z.string().openapi({
@@ -126,6 +130,7 @@ export const updateProjectInfo = createRoute({
   method: "patch",
   path: "/projects/{id}",
   description: "Update project name and description",
+  tags: ["Project"],
   request: {
     headers: z.object({
       Authorization: z.string().openapi({
@@ -158,6 +163,7 @@ export const addProjectMember = createRoute({
   method: "post",
   path: "/projects/{id}/members",
   description: "Add a member to a project (owner only)",
+  tags: ["Project member"],
   request: {
     headers: z.object({
       Authorization: z.string().openapi({
@@ -190,6 +196,7 @@ export const getProjectMembers = createRoute({
   method: "get",
   path: "/projects/{id}/members",
   description: "Get members of a project",
+  tags: ["Project member"],
   request: {
     headers: z.object({
       Authorization: z.string().openapi({
@@ -219,6 +226,7 @@ export const removeProjectMember = createRoute({
   method: "delete",
   path: "/projects/{id}/members",
   description: "Remove a member from a project (owner only, cannot remove self)",
+  tags: ["Project member"],
   request: {
     headers: z.object({
       Authorization: z.string().openapi({
