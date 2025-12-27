@@ -291,7 +291,7 @@ export const deleteSavedNews: AppRouteHandler<DeleteSavedNewsRoute> = async (c) 
   }
 
   // 2. Check if the user is the project owner
-  if (savedNewsItem.project.ownerId !== jwt.id) {
+  if (savedNewsItem.project.ownerId !== jwt.sub) {
     return c.json({ message: "Forbidden - User is not the project owner" }, 403);
   }
 
