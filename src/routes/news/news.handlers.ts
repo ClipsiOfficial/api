@@ -2,7 +2,7 @@ import type { CreateNewsRoute, DeleteSavedNewsRoute, ExistsNewsRoute, GetNewsRou
 import type { AppRouteHandler } from "@/utils/types";
 import { and, desc, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { getDB } from "@/db";
-import { keywords, keywordsToNews, news, savedNews } from "@/db/schema";
+import { keywords, keywordsToNews, news, projects, savedNews, usersToProjects } from "@/db/schema";
 
 export const createNews: AppRouteHandler<CreateNewsRoute> = async (c) => {
   const { keyword_id, rss_atom_id, url, title, summary, source, published_date } = c.req.valid("json");
@@ -42,8 +42,34 @@ export const saveNews: AppRouteHandler<SaveNewsRoute> = async (c) => {
   const { projectId } = c.req.valid("json");
   const newsId = c.req.valid("param").id;
   const db = getDB(c.env);
+  const jwt = c.get("jwtPayload");
 
-  // TODO: fetch project and check if it exists and the user has access to it (at least is member)
+  if (!jwt) {
+    return c.json({ message: "Unauthorized" }, 401);
+  }
+
+  if (jwt.role !== "admin") {
+    const project = await db.query.projects.findFirst({
+      where: eq(projects.id, projectId),
+      columns: { id: true, ownerId: true },
+    });
+
+    if (!project) {
+      return c.json({ message: "Project not found" }, 404);
+    }
+
+    const isOwner = project.ownerId === jwt.sub;
+    const isMember = await db.query.usersToProjects.findFirst({
+      where: and(
+        eq(usersToProjects.projectId, projectId),
+        eq(usersToProjects.userId, jwt.sub),
+      ),
+    });
+
+    if (!isOwner && !isMember) {
+      return c.json({ message: "Forbidden - You do not have access to this project" }, 403);
+    }
+  }
 
   // 1. Fetch the original news
   const originalNews = await db.query.news.findFirst({
@@ -78,6 +104,43 @@ export const updateSavedNews: AppRouteHandler<UpdateSavedNewsRoute> = async (c) 
   const id = c.req.valid("param").id;
   const body = c.req.valid("json");
   const db = getDB(c.env);
+  const jwt = c.get("jwtPayload");
+
+  if (!jwt) {
+    return c.json({ message: "Unauthorized" }, 401);
+  }
+
+  const savedNewsItem = await db.query.savedNews.findFirst({
+    where: eq(savedNews.id, id),
+    columns: { id: true, projectId: true },
+  });
+
+  if (!savedNewsItem) {
+    return c.json({ message: "Saved news not found" }, 404);
+  }
+
+  if (jwt.role !== "admin") {
+    const project = await db.query.projects.findFirst({
+      where: eq(projects.id, savedNewsItem.projectId),
+      columns: { id: true, ownerId: true },
+    });
+
+    if (!project) {
+      return c.json({ message: "Project not found" }, 404);
+    }
+
+    const isOwner = project.ownerId === jwt.sub;
+    const isMember = await db.query.usersToProjects.findFirst({
+      where: and(
+        eq(usersToProjects.projectId, savedNewsItem.projectId),
+        eq(usersToProjects.userId, jwt.sub),
+      ),
+    });
+
+    if (!isOwner && !isMember) {
+      return c.json({ message: "Forbidden - You do not have access to this project" }, 403);
+    }
+  }
 
   const [updatedSavedNews] = await db.update(savedNews)
     .set(body)
@@ -217,7 +280,7 @@ export const existsNews: AppRouteHandler<ExistsNewsRoute> = async (c) => {
   const db = getDB(c.env);
 
   if (!jwt || jwt.role !== "admin") {
-    return c.json({ message: "Forbidden - Admin access required" }, 401);
+    return c.json({ message: "Forbidden - Admin access required" }, 403);
   }
 
   const existingNews = await db.query.news.findFirst({
@@ -278,7 +341,6 @@ export const deleteSavedNews: AppRouteHandler<DeleteSavedNewsRoute> = async (c) 
     return c.json({ message: "Unauthorized" }, 401);
   }
 
-  // 1. Get the saved news with its project
   const savedNewsItem = await db.query.savedNews.findFirst({
     where: eq(savedNews.id, id),
     with: {
@@ -290,12 +352,19 @@ export const deleteSavedNews: AppRouteHandler<DeleteSavedNewsRoute> = async (c) 
     return c.json({ message: "Saved news not found" }, 404);
   }
 
-  // 2. Check if the user is the project owner
-  if (savedNewsItem.project.ownerId !== jwt.sub) {
-    return c.json({ message: "Forbidden - User is not the project owner" }, 403);
-  }
+  if (jwt.role !== "admin") {
+    const isOwner = savedNewsItem.project.ownerId === jwt.sub;
+    const isMember = await db.query.usersToProjects.findFirst({
+      where: and(
+        eq(usersToProjects.projectId, savedNewsItem.projectId),
+        eq(usersToProjects.userId, jwt.sub),
+      ),
+    });
 
-  // 3. Delete the saved news
+    if (!isOwner && !isMember) {
+      return c.json({ message: "Forbidden - You do not have access to this project" }, 403);
+    }
+  }
   await db.delete(savedNews).where(eq(savedNews.id, id));
 
   return c.body(null, 204);

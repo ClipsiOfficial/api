@@ -69,7 +69,7 @@ export const keywords = sqliteTable("keyword", {
   content: text("content").notNull(),
   searches: integer("searches").notNull().default(0),
   projectId: integer("project_id").notNull().references(() => projects.id),
-  visible: integer("visible").notNull().default(1), // TODO: Create and endpoint to toggle visibility (valid for admin and project owners)
+  visible: integer("visible").notNull().default(1),
 }, t => ([
   uniqueIndex("keyword_project_id_content_idx").on(t.projectId, t.content),
 ]));
