@@ -40,9 +40,9 @@ export const rssAtoms = sqliteTable("rss_atom", {
   projectId: integer("project_id").notNull().references(() => projects.id),
   url: text("url").notNull(),
   source: text("source", { enum: rssAtomSourceEnum }),
-}, t => ({
-  unq: uniqueIndex("rss_atom_project_id_url_idx").on(t.projectId, t.url),
-}));
+}, t => ([
+  uniqueIndex("rss_atom_project_id_url_idx").on(t.projectId, t.url),
+]));
 
 export const news = sqliteTable("news", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -50,7 +50,7 @@ export const news = sqliteTable("news", {
   title: text("title").notNull(),
   summary: text("summary").default("no disponible"),
   timestamp: integer("timestamp", { mode: "timestamp" }).notNull(),
-  keywords: integer("keywords"),
+  source: text("source").notNull().default("Unknown"),
   rssAtomId: integer("rss_atom").references(() => rssAtoms.id),
 });
 
@@ -67,34 +67,28 @@ export const savedNews = sqliteTable("saved_news", {
 export const keywords = sqliteTable("keyword", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   content: text("content").notNull(),
-  searches: integer("searches").default(0),
+  searches: integer("searches").notNull().default(0),
   projectId: integer("project_id").notNull().references(() => projects.id),
-}, t => ({
-  unq: uniqueIndex("keyword_project_id_content_idx").on(t.projectId, t.content),
-}));
+  visible: integer("visible").notNull().default(1),
+}, t => ([
+  uniqueIndex("keyword_project_id_content_idx").on(t.projectId, t.content),
+]));
 
 // Join Tables
 
 export const usersToProjects = sqliteTable("user_project", {
   userId: integer("user_id").references(() => users.id),
   projectId: integer("project_id").references(() => projects.id),
-}, t => ({
-  pk: primaryKey({ columns: [t.userId, t.projectId] }),
-}));
+}, t => ([
+  primaryKey({ columns: [t.userId, t.projectId] }),
+]));
 
 export const keywordsToNews = sqliteTable("keyword_news", {
   keywordId: integer("keyword_id").references(() => keywords.id),
   newsId: integer("news_id").references(() => news.id),
-}, t => ({
-  pk: primaryKey({ columns: [t.keywordId, t.newsId] }),
-}));
-
-export const newsToSavedNews = sqliteTable("news_saved_news", {
-  newsId: integer("news_id").references(() => news.id),
-  savedNewsId: integer("saved_news_id").references(() => savedNews.id),
-}, t => ({
-  pk: primaryKey({ columns: [t.newsId, t.savedNewsId] }),
-}));
+}, t => ([
+  primaryKey({ columns: [t.keywordId, t.newsId] }),
+]));
 
 // Relations
 
@@ -148,15 +142,13 @@ export const newsRelations = relations(news, ({ one, many }) => ({
     references: [rssAtoms.id],
   }),
   keywords: many(keywordsToNews),
-  savedNews: many(newsToSavedNews),
 }));
 
-export const savedNewsRelations = relations(savedNews, ({ one, many }) => ({
+export const savedNewsRelations = relations(savedNews, ({ one }) => ({
   project: one(projects, {
     fields: [savedNews.projectId],
     references: [projects.id],
   }),
-  news: many(newsToSavedNews),
 }));
 
 export const keywordsRelations = relations(keywords, ({ one, many }) => ({
@@ -175,17 +167,6 @@ export const keywordsToNewsRelations = relations(keywordsToNews, ({ one }) => ({
   news: one(news, {
     fields: [keywordsToNews.newsId],
     references: [news.id],
-  }),
-}));
-
-export const newsToSavedNewsRelations = relations(newsToSavedNews, ({ one }) => ({
-  news: one(news, {
-    fields: [newsToSavedNews.newsId],
-    references: [news.id],
-  }),
-  savedNews: one(savedNews, {
-    fields: [newsToSavedNews.savedNewsId],
-    references: [savedNews.id],
   }),
 }));
 

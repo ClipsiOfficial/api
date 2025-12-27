@@ -1,12 +1,13 @@
-import type { CreateKeywordRoute, GetKeywordsRoute, DeleteKeywordRoute } from "./keywords.routes";
+import type { CreateKeywordRoute, DeleteKeywordRoute, GetKeywordsRoute } from "./keywords.routes";
 import type { AppRouteHandler } from "@/utils/types";
-import { eq, and } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDB } from "@/db";
-import { projects, keywords } from "@/db/schema";
+import { keywords, projects } from "@/db/schema";
 
 export const getKeywords: AppRouteHandler<GetKeywordsRoute> = async (c) => {
   const payload = c.get("jwtPayload");
-  if (!payload) return c.json({ message: "Unauthorized" }, 401);
+  if (!payload)
+    return c.json({ message: "Unauthorized" }, 401);
 
   const db = getDB(c.env);
   const projectId = c.req.valid("param").id;
@@ -15,11 +16,14 @@ export const getKeywords: AppRouteHandler<GetKeywordsRoute> = async (c) => {
   const project = await db.query.projects.findFirst({
     where: eq(projects.id, projectId),
   });
-  if (!project) return c.json({ message: "Project not found" }, 404);
+  if (!project)
+    return c.json({ message: "Project not found" }, 404);
 
-  // Obtener todas las keywords del proyecto
   const projectKeywords = await db.query.keywords.findMany({
-    where: eq(keywords.projectId, projectId),
+    where: and(
+      eq(keywords.projectId, projectId),
+      eq(keywords.visible, 1),
+    ),
   });
 
   return c.json(projectKeywords, 200);
@@ -27,7 +31,8 @@ export const getKeywords: AppRouteHandler<GetKeywordsRoute> = async (c) => {
 
 export const createKeyword: AppRouteHandler<CreateKeywordRoute> = async (c) => {
   const payload = c.get("jwtPayload");
-  if (!payload) return c.json({ message: "Unauthorized" }, 401);
+  if (!payload)
+    return c.json({ message: "Unauthorized" }, 401);
 
   const db = getDB(c.env);
   const projectId = c.req.valid("param").id;
@@ -38,23 +43,34 @@ export const createKeyword: AppRouteHandler<CreateKeywordRoute> = async (c) => {
   const project = await db.query.projects.findFirst({
     where: eq(projects.id, projectId),
   });
-  if (!project) return c.json({ message: "Project not found" }, 404);
+  if (!project)
+    return c.json({ message: "Project not found" }, 404);
 
-  // Solo owner puede agregar keywords
-  if (project.ownerId !== userId) return c.json({ message: "Forbidden" }, 403);
+  if (project.ownerId !== userId)
+    return c.json({ message: "Forbidden" }, 403);
 
-  // Verificar si la keyword ya existe en el proyecto
+  const normalizedContent = body.content.toLowerCase();
+
   const existing = await db.query.keywords.findFirst({
     where: and(
       eq(keywords.projectId, projectId),
-      eq(keywords.content, body.content)
+      eq(keywords.content, normalizedContent),
     ),
   });
-  if (existing) return c.json({ message: "Keyword already exists" }, 400);
 
-  // Insertar la keyword con projectId
+  if (existing) {
+    if (existing.visible === 0) {
+      const [reactivated] = await db.update(keywords)
+        .set({ visible: 1 })
+        .where(eq(keywords.id, existing.id))
+        .returning();
+      return c.json(reactivated, 200);
+    }
+    return c.json({ message: "Keyword already exists" }, 400);
+  }
+
   const [newKeyword] = await db.insert(keywords).values({
-    content: body.content,
+    content: normalizedContent,
     projectId,
   }).returning();
 
@@ -63,7 +79,8 @@ export const createKeyword: AppRouteHandler<CreateKeywordRoute> = async (c) => {
 
 export const deleteKeyword: AppRouteHandler<DeleteKeywordRoute> = async (c) => {
   const payload = c.get("jwtPayload");
-  if (!payload) return c.json({ message: "Unauthorized" }, 401);
+  if (!payload)
+    return c.json({ message: "Unauthorized" }, 401);
 
   const db = getDB(c.env);
   const { id: projectId, keywordId } = c.req.valid("param");
@@ -73,22 +90,26 @@ export const deleteKeyword: AppRouteHandler<DeleteKeywordRoute> = async (c) => {
   const project = await db.query.projects.findFirst({
     where: eq(projects.id, projectId),
   });
-  if (!project) return c.json({ message: "Project not found" }, 404);
+  if (!project)
+    return c.json({ message: "Project not found" }, 404);
 
   // Solo owner puede eliminar keywords
-  if (project.ownerId !== userId) return c.json({ message: "Forbidden" }, 403);
+  if (project.ownerId !== userId)
+    return c.json({ message: "Forbidden" }, 403);
 
   // Buscar keyword
   const keyword = await db.query.keywords.findFirst({
     where: and(
       eq(keywords.id, keywordId),
-      eq(keywords.projectId, projectId)
+      eq(keywords.projectId, projectId),
     ),
   });
-  if (!keyword) return c.json({ message: "Keyword not found" }, 404);
+  if (!keyword)
+    return c.json({ message: "Keyword not found" }, 404);
 
-  // Eliminar keyword
-  await db.delete(keywords).where(eq(keywords.id, keywordId));
+  await db.update(keywords)
+    .set({ visible: 0 })
+    .where(eq(keywords.id, keywordId));
 
   return c.json({ message: "Keyword deleted" }, 200);
 };

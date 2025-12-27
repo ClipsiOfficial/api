@@ -6,12 +6,9 @@ export type QueueName = "news" | "rss_atom" | "searcher";
 
 // Schemas for different message types by queue
 export const NewsMessageSchema = z.object({
-  message: z.string(), // TODO: Define the structure of a news message
-//   kind: z.literal("news"),
-//   title: z.string().optional(),
-//   url: z.string().url().optional(),
-//   timestamp: z.number(),
-//   data: z.record(z.string(), z.unknown()).optional(),
+  keyword_id: z.number().refine(id => id > 0, { message: "keyword_id must be a positive integer" }),
+  rss_atom_id: z.number().refine(id => id > 0, { message: "rss_atom_id must be a positive integer" }).optional(),
+  url: z.url({ message: "url must be a valid URL" }),
 });
 
 export const RSSMessageSchema = z.object({
@@ -22,9 +19,11 @@ export const RSSMessageSchema = z.object({
 });
 
 export const SearcherMessageSchema = z.object({
-  message: z.string(), // TODO: Define the structure of a searcher message
-//   kind: z.literal("extractor"),
-//   feedUrl: z.string().url(),
+  project_id: z.number().refine(id => id > 0, { message: "project_id must be a positive integer" }),
+  topic: z.string().min(1, { message: "topic cannot be empty" }),
+  keyword_id: z.number().refine(id => id > 0, { message: "keyword_id must be a positive integer" }),
+  keyword: z.string().min(1, { message: "keyword cannot be empty" }),
+  searches: z.number().refine(count => count > 0, { message: "searches must be a positive integer" }).default(0),
 });
 
 // Map queue name to its schema so we validate against the specific queue schema

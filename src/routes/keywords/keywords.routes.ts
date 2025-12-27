@@ -6,6 +6,7 @@ export const getKeywords = createRoute({
   method: "get",
   path: "/projects/{id}/keywords",
   description: "Get all keywords for a project",
+  tags: ["Project keywords"],
   request: {
     headers: z.object({
       Authorization: z.string().openapi({
@@ -17,13 +18,13 @@ export const getKeywords = createRoute({
     }),
   },
   responses: {
-    200: { 
-      description: "Keywords retrieved", 
-      content: { 
-        "application/json": { 
-          schema: z.array(selectKeywordSchema) 
-        } 
-      } 
+    200: {
+      description: "Keywords retrieved",
+      content: {
+        "application/json": {
+          schema: z.array(selectKeywordSchema),
+        },
+      },
     },
     401: { description: "Unauthorized" },
     404: { description: "Project not found" },
@@ -35,6 +36,7 @@ export const createKeyword = createRoute({
   method: "post",
   path: "/projects/{id}/keywords",
   description: "Add a keyword to a project",
+  tags: ["Project keywords"],
   request: {
     headers: z.object({
       Authorization: z.string().openapi({
@@ -66,6 +68,7 @@ export const deleteKeyword = createRoute({
   method: "delete",
   path: "/projects/{id}/keywords/{keywordId}",
   description: "Delete a keyword from a project",
+  tags: ["Project keywords"],
   request: {
     headers: z.object({
       Authorization: z.string().openapi({

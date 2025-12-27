@@ -6,6 +6,8 @@ export const login = createRoute({
   method: "post",
   path: "/auth/login",
   description: "User login",
+  summary: "Authenticate user and return access token",
+  tags: ["Auth"],
   request: {
     body: {
       content: {
@@ -39,8 +41,10 @@ export const login = createRoute({
 // Create User Route (Admin only)
 export const createUser = createRoute({
   method: "post",
-  path: "/users",
+  path: "/user",
   description: "Create a new user (Admin only)",
+  summary: "Create a new user account with specified role (Admin role only)",
+  tags: ["Admin Only"],
   request: {
     headers: z.object({
       Authorization: z.string().openapi({
@@ -77,8 +81,10 @@ export const createUser = createRoute({
 // Update User Route
 export const updateUser = createRoute({
   method: "patch",
-  path: "/users/me",
+  path: "/user",
   description: "Update current user information",
+  summary: "Update fields of the current user's profile",
+  tags: ["User"],
   request: {
     headers: z.object({
       Authorization: z.string().openapi({
