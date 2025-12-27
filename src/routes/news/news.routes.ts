@@ -24,6 +24,7 @@ export const createNews = createRoute({
             url: z.url(),
             title: z.string(),
             summary: z.string(),
+            source: z.string(),
             published_date: z.date().optional(),
           }),
         },
@@ -160,6 +161,9 @@ export const getNews = createRoute({
       page: z.string().optional().default("1").transform(v => Number(v)).openapi({ param: { name: "page", in: "query" } }),
       limit: z.string().optional().default("10").transform(v => Number(v)).openapi({ param: { name: "limit", in: "query" } }),
       search: z.string().optional().openapi({ param: { name: "search", in: "query" } }),
+      sources: z.string().optional().openapi({ param: { name: "sources", in: "query" }, description: "Comma-separated list of sources to filter by" }),
+      dateFrom: z.string().optional().openapi({ param: { name: "dateFrom", in: "query" }, description: "Filter news from this date (ISO 8601 format)" }),
+      dateTo: z.string().optional().openapi({ param: { name: "dateTo", in: "query" }, description: "Filter news until this date (ISO 8601 format)" }),
     }),
   },
   responses: {
@@ -172,6 +176,41 @@ export const getNews = createRoute({
             total: z.number(),
             page: z.number(),
             limit: z.number(),
+          }),
+        },
+      },
+    },
+    401: {
+      description: "Unauthorized",
+    },
+  },
+});
+
+// Get News Sources Route
+export const getNewsSources = createRoute({
+  method: "get",
+  path: "/news/sources",
+  description: "Get unique news sources for a project",
+  summary: "Retrieve a unique, alphabetically sorted list of news sources for a specific project",
+  tags: ["News"],
+  request: {
+    headers: z.object({
+      Authorization: z.string().openapi({
+        param: { name: "Authorization", in: "header" },
+        description: "Bearer access token",
+      }),
+    }),
+    query: z.object({
+      projectId: z.string().transform(v => Number(v)).openapi({ param: { name: "projectId", in: "query" } }),
+    }),
+  },
+  responses: {
+    200: {
+      description: "List of unique sources",
+      content: {
+        "application/json": {
+          schema: z.object({
+            sources: z.array(z.string()),
           }),
         },
       },
@@ -296,6 +335,7 @@ export type CreateNewsRoute = typeof createNews;
 export type SaveNewsRoute = typeof saveNews;
 export type UpdateSavedNewsRoute = typeof updateSavedNews;
 export type GetNewsRoute = typeof getNews;
+export type GetNewsSourcesRoute = typeof getNewsSources;
 export type ExistsNewsRoute = typeof existsNews;
 export type GetSavedNewsRoute = typeof getSavedNews;
 export type DeleteSavedNewsRoute = typeof deleteSavedNews;

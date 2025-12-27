@@ -50,6 +50,7 @@ export const news = sqliteTable("news", {
   title: text("title").notNull(),
   summary: text("summary").default("no disponible"),
   timestamp: integer("timestamp", { mode: "timestamp" }).notNull(),
+  source: text("source").notNull().default("Unknown"),
   rssAtomId: integer("rss_atom").references(() => rssAtoms.id),
 });
 
@@ -68,7 +69,6 @@ export const keywords = sqliteTable("keyword", {
   content: text("content").notNull(),
   searches: integer("searches").notNull().default(0),
   projectId: integer("project_id").notNull().references(() => projects.id),
-  allProcessed: integer("all_processed").notNull().default(0), // TODO: Create and endpoint to mark that all news have been  found by this keyword (valid for admin)
   visible: integer("visible").notNull().default(1), // TODO: Create and endpoint to toggle visibility (valid for admin and project owners)
 }, t => ([
   uniqueIndex("keyword_project_id_content_idx").on(t.projectId, t.content),

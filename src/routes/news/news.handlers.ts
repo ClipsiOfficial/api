@@ -1,11 +1,11 @@
-import type { CreateNewsRoute, DeleteSavedNewsRoute, ExistsNewsRoute, GetNewsRoute, GetSavedNewsRoute, SaveNewsRoute, UpdateSavedNewsRoute } from "./news.routes";
+import type { CreateNewsRoute, DeleteSavedNewsRoute, ExistsNewsRoute, GetNewsRoute, GetNewsSourcesRoute, GetSavedNewsRoute, SaveNewsRoute, UpdateSavedNewsRoute } from "./news.routes";
 import type { AppRouteHandler } from "@/utils/types";
 import { and, desc, eq, inArray, notInArray, sql } from "drizzle-orm";
 import { getDB } from "@/db";
 import { keywords, keywordsToNews, news, savedNews } from "@/db/schema";
 
 export const createNews: AppRouteHandler<CreateNewsRoute> = async (c) => {
-  const { keyword_id, rss_atom_id, url, title, summary, published_date } = c.req.valid("json");
+  const { keyword_id, rss_atom_id, url, title, summary, source, published_date } = c.req.valid("json");
   const db = getDB(c.env);
   const jwt = c.get("jwtPayload");
 
@@ -18,6 +18,7 @@ export const createNews: AppRouteHandler<CreateNewsRoute> = async (c) => {
       url,
       title,
       summary,
+      source,
       timestamp: published_date ?? new Date(),
       rssAtomId: rss_atom_id,
     }).returning();
@@ -91,7 +92,7 @@ export const updateSavedNews: AppRouteHandler<UpdateSavedNewsRoute> = async (c) 
 };
 
 export const getNews: AppRouteHandler<GetNewsRoute> = async (c) => {
-  const { projectId, page, limit, search } = c.req.valid("query");
+  const { projectId, page, limit, search, sources, dateFrom, dateTo } = c.req.valid("query");
   const db = getDB(c.env);
 
   // 1. Get keywords for the project
@@ -115,7 +116,6 @@ export const getNews: AppRouteHandler<GetNewsRoute> = async (c) => {
   // 3. Build query for news
   const conditions = [
     inArray(keywordsToNews.keywordId, keywordIds),
-    eq(keywords.visible, 1),
   ];
 
   if (excludedNewsIds.length > 0) {
@@ -126,6 +126,25 @@ export const getNews: AppRouteHandler<GetNewsRoute> = async (c) => {
     conditions.push(
       sql`(${news.title} LIKE ${`%${search}%`} OR ${news.summary} LIKE ${`%${search}%`})`,
     );
+  }
+
+  // Filter by sources
+  if (sources) {
+    const sourceList = sources.split(",").map(s => s.trim());
+    conditions.push(inArray(news.source, sourceList));
+  }
+
+  // Filter by date range
+  if (dateFrom) {
+    const fromDate = new Date(dateFrom);
+    conditions.push(sql`${news.timestamp} >= ${fromDate.getTime() / 1000}`);
+  }
+
+  if (dateTo) {
+    const toDate = new Date(dateTo);
+    // Set to end of day
+    toDate.setHours(23, 59, 59, 999);
+    conditions.push(sql`${news.timestamp} <= ${toDate.getTime() / 1000}`);
   }
 
   // Count total
@@ -144,6 +163,7 @@ export const getNews: AppRouteHandler<GetNewsRoute> = async (c) => {
       title: news.title,
       summary: news.summary,
       timestamp: news.timestamp,
+      source: news.source,
       rssAtomId: news.rssAtomId,
     })
     .from(news)
@@ -159,6 +179,36 @@ export const getNews: AppRouteHandler<GetNewsRoute> = async (c) => {
     page,
     limit,
   });
+};
+
+export const getNewsSources: AppRouteHandler<GetNewsSourcesRoute> = async (c) => {
+  const { projectId } = c.req.valid("query");
+  const db = getDB(c.env);
+
+  // 1. Get keywords for the project
+  const projectKeywords = await db.query.keywords.findMany({
+    where: eq(keywords.projectId, projectId),
+  });
+
+  if (projectKeywords.length === 0) {
+    return c.json({ sources: [] });
+  }
+
+  const keywordIds = projectKeywords.map(k => k.id);
+
+  // 2. Get all unique sources for the project
+  const uniqueSources = await db
+    .selectDistinct({ source: news.source })
+    .from(news)
+    .innerJoin(keywordsToNews, eq(news.id, keywordsToNews.newsId))
+    .where(inArray(keywordsToNews.keywordId, keywordIds));
+
+  // 3. Sort alphabetically
+  const sources = uniqueSources
+    .map(item => item.source)
+    .sort((a, b) => a.localeCompare(b));
+
+  return c.json({ sources });
 };
 
 export const existsNews: AppRouteHandler<ExistsNewsRoute> = async (c) => {
