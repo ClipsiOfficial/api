@@ -10,7 +10,7 @@ export const createNews: AppRouteHandler<CreateNewsRoute> = async (c) => {
   const jwt = c.get("jwtPayload");
 
   if (!jwt || jwt.role !== "admin") {
-    return c.json({ message: "Forbidden - Admin access required" }, 401);
+    return c.json({ message: "Forbidden - Admin access required" }, 403);
   }
 
   try {

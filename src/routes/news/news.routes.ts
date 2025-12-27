@@ -43,6 +43,9 @@ export const createNews = createRoute({
     401: {
       description: "Unauthorized",
     },
+    403: {
+      description: "Forbidden - Admin access required",
+    },
     409: {
       description: "News already exists",
     },

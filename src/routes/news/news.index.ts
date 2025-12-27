@@ -8,6 +8,7 @@ privateNewsRouter.openapi(routes.createNews, handlers.createNews);
 privateNewsRouter.openapi(routes.saveNews, handlers.saveNews);
 privateNewsRouter.openapi(routes.updateSavedNews, handlers.updateSavedNews);
 privateNewsRouter.openapi(routes.getNews, handlers.getNews);
+privateNewsRouter.openapi(routes.existsNews, handlers.existsNews);
 privateNewsRouter.openapi(routes.getNewsSources, handlers.getNewsSources);
 privateNewsRouter.openapi(routes.getSavedNews, handlers.getSavedNews);
 privateNewsRouter.openapi(routes.deleteSavedNews, handlers.deleteSavedNews);

@@ -2,7 +2,7 @@ import type { CreateKeywordRoute, DeleteKeywordRoute, GetKeywordsRoute } from ".
 import type { AppRouteHandler } from "@/utils/types";
 import { and, eq } from "drizzle-orm";
 import { getDB } from "@/db";
-import { keywords, projects, usersToProjects } from "@/db/schema";
+import { keywords, projects } from "@/db/schema";
 
 export const getKeywords: AppRouteHandler<GetKeywordsRoute> = async (c) => {
   const payload = c.get("jwtPayload");
