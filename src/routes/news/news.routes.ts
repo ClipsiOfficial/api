@@ -4,7 +4,7 @@ import { insertSavedNewsSchema, selectNewsSchema, selectSavedNewsSchema } from "
 // Create News Route
 export const createNews = createRoute({
   method: "post",
-  path: "/news",
+  path: "/admin/news",
   description: "Create a new news entry",
   summary: "Create a new news entry (Admin role only)",
   tags: ["Admin Only"],
