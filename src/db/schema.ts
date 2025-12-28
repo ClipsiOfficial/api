@@ -31,7 +31,6 @@ export const projects = sqliteTable("project", {
   name: text("name", { length: 30 }).notNull(),
   description: text("description"),
   topic: text("topic").notNull(),
-  members: integer("members"),
   ownerId: integer("owner").notNull().references(() => users.id),
 });
 

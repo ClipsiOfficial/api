@@ -34,41 +34,21 @@ export const createProject: AppRouteHandler<CreateProjectRoute> = async (c) => {
     return c.json({ message: "Subscription not found" }, 404);
   }
 
-  // Subscription project limit
-  const projectLimit = subscription.projectLimit;
-
   const { count: ownedCount } = (await db
     .select({ count: sql<number>`count(*)` })
     .from(projects)
     .where(eq(projects.ownerId, userRequest.id))
   )[0];
 
-  const { count: memberCount } = (await db
-    .select({ count: sql<number>`count(*)` })
-    .from(usersToProjects)
-    .where(eq(usersToProjects.userId, userRequest.id))
-  )[0];
-
-  const currentProjects = ownedCount + memberCount;
-
-  if (currentProjects >= projectLimit) {
+  if (ownedCount >= subscription.projectLimit) {
     return c.json({ message: "Project limit reached for your plan" }, 403);
   }
 
-  // Insert new project into the database and assign the ownerId
+  // Insert new project into the database and assign the ownerId from JWT
   const [newProject] = await db.insert(projects).values({
     ...body,
     ownerId: userRequest.id,
   }).returning();
-
-  if (Array.isArray(body.keywords)) {
-    const keywordsToInsert = body.keywords.map((content: string) => ({
-      content,
-      projectId: newProject.id,
-    }));
-
-    await db.insert(keywords).values(keywordsToInsert);
-  }
 
   // Return to frontend the new project and the 201 status code(created)
   return c.json(newProject, 201);
@@ -179,7 +159,7 @@ export const getProject: AppRouteHandler<GetProjectRoute> = async (c) => {
 
   // Check if member
   const member = await db.query.usersToProjects.findFirst({
-    where: eq(usersToProjects.userId, userId),
+    where: and(eq(usersToProjects.userId, userId), eq(usersToProjects.projectId, id)),
   });
 
   if (!member) {
@@ -212,7 +192,7 @@ export const updateProjectInfo: AppRouteHandler<UpdateProjectInfoRoute> = async 
 
   if (!validUser) {
     const member = await db.query.usersToProjects.findFirst({
-      where: eq(usersToProjects.userId, userId),
+      where: and(eq(usersToProjects.userId, userId), eq(usersToProjects.projectId, id)),
     });
     validUser = !!member;
   }
@@ -249,11 +229,7 @@ export const getProjectMembers: AppRouteHandler<GetProjectMembersRoute> = async 
 
   const userId = payload.sub;
   // Only owner or project members can view member list
-  let allowed = project.ownerId === userId;
-  if (!allowed) {
-    const member = await db.query.usersToProjects.findFirst({ where: eq(usersToProjects.userId, userId) });
-    allowed = !!member;
-  }
+  const allowed = project.ownerId === userId;
   if (!allowed)
     return c.json({ message: "Forbidden" }, 403);
 
