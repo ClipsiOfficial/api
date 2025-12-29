@@ -126,16 +126,35 @@ export const processKeyword: AppRouteHandler<ProcessKeywordRoute> = async (c) =>
   const db = getDB(c.env);
   const { keywordId } = c.req.valid("param");
 
-  // Check if keyword exists
+  // Check if keyword exists and get its project
   const keyword = await db.query.keywords.findFirst({
     where: eq(keywords.id, keywordId),
   });
   if (!keyword)
     return c.json({ message: "Keyword not found" }, 404);
 
+  const projectId = keyword.projectId;
+
+  // Mark this keyword as processed
   await db.update(keywords)
     .set({ processed: true })
     .where(eq(keywords.id, keywordId));
+
+  // Check if all visible keywords in the project are now processed
+  const unprocessedKeywords = await db.query.keywords.findMany({
+    where: and(
+      eq(keywords.projectId, projectId),
+      eq(keywords.visible, 1),
+      eq(keywords.processed, false),
+    ),
+  });
+
+  // If all keywords are processed, reset them all to processed: false
+  if (unprocessedKeywords.length === 0) {
+    await db.update(keywords)
+      .set({ processed: false, searches: 0 })
+      .where(eq(keywords.projectId, projectId));
+  }
 
   return c.json({ message: "Keyword marked as processed" }, 200);
 };
