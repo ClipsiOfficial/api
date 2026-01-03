@@ -315,10 +315,21 @@ export const getSavedNews: AppRouteHandler<GetSavedNewsRoute> = async (c) => {
     .from(savedNews)
     .where(and(...conditions));
 
-  // Fetch data
+
   const data = await db
-    .select()
+    .select({
+      id: savedNews.id,
+      title: savedNews.title,
+      summary: savedNews.summary,
+      category: savedNews.category,
+      views: savedNews.views,
+      projectId: savedNews.projectId,
+      url: news.url,
+      timestamp: news.timestamp,
+      source: news.source,
+    })
     .from(savedNews)
+    .innerJoin(news, eq(savedNews.sourceNewId, news.id))
     .where(and(...conditions))
     .limit(limit)
     .offset((page - 1) * limit)

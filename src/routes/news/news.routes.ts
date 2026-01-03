@@ -1,6 +1,13 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { insertSavedNewsSchema, selectNewsSchema, selectSavedNewsSchema } from "@/db/schema";
 
+const savedNewsWithSourceSchema = selectSavedNewsSchema.extend({
+  url: z.string(),
+  timestamp: z.number(),
+  source: z.string(),
+});
+
+
 // Create News Route
 export const createNews = createRoute({
   method: "post",
@@ -289,7 +296,7 @@ export const getSavedNews = createRoute({
       content: {
         "application/json": {
           schema: z.object({
-            data: z.array(selectSavedNewsSchema),
+            data: z.array(savedNewsWithSourceSchema),
             total: z.number(),
             page: z.number(),
             limit: z.number(),
