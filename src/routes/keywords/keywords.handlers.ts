@@ -72,6 +72,9 @@ export const createKeyword: AppRouteHandler<CreateKeywordRoute> = async (c) => {
   const [newKeyword] = await db.insert(keywords).values({
     content: normalizedContent,
     projectId,
+    searches: 0,
+    visible: 1,
+    processed: false,
   }).returning();
 
   return c.json(newKeyword, 201);

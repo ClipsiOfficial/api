@@ -49,7 +49,7 @@ export const createKeyword = createRoute({
     body: {
       content: {
         "application/json": {
-          schema: insertKeywordSchema.omit({ id: true, projectId: true }),
+          schema: insertKeywordSchema.omit({ id: true, projectId: true, searches: true, visible: true, processed: true }),
         },
       },
     },

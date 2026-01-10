@@ -164,9 +164,12 @@ export const getNews: AppRouteHandler<GetNewsRoute> = async (c) => {
   const { projectId, page, limit, search, sources, dateFrom, dateTo } = c.req.valid("query");
   const db = getDB(c.env);
 
-  // 1. Get keywords for the project
+  // 1. Get keywords for the project (only visible ones)
   const projectKeywords = await db.query.keywords.findMany({
-    where: eq(keywords.projectId, projectId),
+    where: and(
+      eq(keywords.projectId, projectId),
+      eq(keywords.visible, 1),
+    ),
   });
 
   if (projectKeywords.length === 0) {
