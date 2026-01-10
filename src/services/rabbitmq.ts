@@ -125,7 +125,7 @@ export async function publishToQueue<Q extends QueueName>(
       : await fetch(publishURL, requestInit);
   }
   catch (error) {
-    console.error(`[RabbitMQ] Error conectando a: ${publishURL}`, error);
+    console.error(`[RabbitMQ] Error connecting to: ${publishURL}`, error);
     throw new Error(`RabbitMQ connection failed: ${(error as Error).message}`);
   }
 
