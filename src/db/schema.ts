@@ -69,7 +69,7 @@ export const keywords = sqliteTable("keyword", {
   searches: integer("searches").notNull().default(0),
   projectId: integer("project_id").notNull().references(() => projects.id),
   visible: integer("visible").notNull().default(1),
-  processed: integer("processed", { mode: "boolean" }).default(false),
+  processed: integer("processed", { mode: "boolean" }).notNull().default(false),
 }, t => ([
   uniqueIndex("keyword_project_id_content_idx").on(t.projectId, t.content),
 ]));
