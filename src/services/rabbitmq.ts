@@ -6,25 +6,23 @@ export type QueueName = "news" | "rss_atom" | "searcher";
 
 // Schemas for different message types by queue
 export const NewsMessageSchema = z.object({
-  message: z.string(), // TODO: Define the structure of a news message
-//   kind: z.literal("news"),
-//   title: z.string().optional(),
-//   url: z.string().url().optional(),
-//   timestamp: z.number(),
-//   data: z.record(z.string(), z.unknown()).optional(),
+  keyword_id: z.number().refine(id => id > 0, { message: "keyword_id must be a positive integer" }),
+  rss_atom_id: z.number().refine(id => id > 0, { message: "rss_atom_id must be a positive integer" }).optional(),
+  url: z.url({ message: "url must be a valid URL" }),
 });
 
 export const RSSMessageSchema = z.object({
-  message: z.string(), // TODO: Define the structure of an RSS/Atom message
-//   kind: z.literal("parser"),
-//   content: z.string(),
-//   sourceUrl: z.string().url(),
+  rss_atom_id: z.number().refine(id => id > 0, { message: "rss_atom_id must be a positive integer" }),
+  feed_url: z.url({ message: "feed_url must be a valid URL" }),
+  keywords: z.array(z.string().min(1, { message: "keyword cannot be empty" })),
 });
 
 export const SearcherMessageSchema = z.object({
-  message: z.string(), // TODO: Define the structure of a searcher message
-//   kind: z.literal("extractor"),
-//   feedUrl: z.string().url(),
+  project_id: z.number().refine(id => id > 0, { message: "project_id must be a positive integer" }),
+  topic: z.string().min(1, { message: "topic cannot be empty" }),
+  keyword_id: z.number().refine(id => id > 0, { message: "keyword_id must be a positive integer" }),
+  keyword: z.string().min(1, { message: "keyword cannot be empty" }),
+  searches: z.number().refine(count => count >= 0, { message: "searches must be a non-negative integer" }).default(0),
 });
 
 // Map queue name to its schema so we validate against the specific queue schema
@@ -108,7 +106,7 @@ export async function publishToQueue<Q extends QueueName>(
 
   // Decide endpoint & fetch method based on environment
   const isProd = env.NODE_ENV === "production";
-  const baseURL = isProd ? "http://rabbitmq:15672" : `http://localhost:15672`;
+  const baseURL = isProd ? "http://rabbitmq:15672" : `http://127.0.0.1:15672`;
   const publishURL = `${baseURL}/api/exchanges/%2F/${encodeURIComponent(exchange)}/publish`;
 
   const requestInit: RequestInit = {
@@ -120,9 +118,16 @@ export async function publishToQueue<Q extends QueueName>(
     body: JSON.stringify(body),
   };
 
-  const response = isProd
-    ? await env.VPC_SERVICE.fetch(publishURL, requestInit)
-    : await fetch(publishURL, requestInit);
+  let response: Response;
+  try {
+    response = isProd
+      ? await env.VPC_SERVICE.fetch(publishURL, requestInit)
+      : await fetch(publishURL, requestInit);
+  }
+  catch (error) {
+    console.error(`[RabbitMQ] Error connecting to: ${publishURL}`, error);
+    throw new Error(`RabbitMQ connection failed: ${(error as Error).message}`);
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
