@@ -41,7 +41,7 @@ export const login = createRoute({
 // Create User Route (Admin only)
 export const createUser = createRoute({
   method: "post",
-  path: "/user",
+  path: "/admin/user",
   description: "Create a new user (Admin only)",
   summary: "Create a new user account with specified role (Admin role only)",
   tags: ["Admin Only"],

@@ -1,13 +1,14 @@
-import type { Env as BindingsEnv } from "./utils/env";
+import type { Env as BindingsEnv, Env } from "./utils/env";
 import { Scalar } from "@scalar/hono-api-reference";
 import packageJson from "../package.json" assert { type: "json" };
 import { authMiddleware, corsMiddleware, errorHandler, notFoundHandler, validateEnv } from "./middleware";
+import { privateKeywordRouter, publicKeywordRouter } from "./routes/keywords/keywords.index";
 import { privateNewsRouter } from "./routes/news/news.index";
+import { privateProjectRouter, publicProjectRouter } from "./routes/projects/projects.index";
 import { privateUserRouter, publicUserRouter } from "./routes/users/users.index";
 import handleSchedulers from "./services/scheduler";
+import { EnvSchema } from "./utils/env";
 import { createRouter } from "./utils/functions";
-import { privateProjectRouter, publicProjectRouter } from "./routes/projects/projects.index";
-import { publicKeywordRouter, privateKeywordRouter } from "./routes/keywords/keywords.index"
 
 const app = createRouter();
 
@@ -64,7 +65,8 @@ privateRoutes.forEach((router) => {
 export default {
   // The Hono app handles regular HTTP requests
   fetch: app.fetch,
-  async scheduled(controller: ScheduledController, env: { Bindings: BindingsEnv }, ctx: ExecutionContext) {
-    ctx.waitUntil(handleSchedulers(controller, env.Bindings));
+  async scheduled(controller: ScheduledController, env: BindingsEnv, ctx: ExecutionContext) {
+    const validatedEnv: Env = EnvSchema.parse(env);
+    ctx.waitUntil(handleSchedulers(controller, validatedEnv));
   },
 };

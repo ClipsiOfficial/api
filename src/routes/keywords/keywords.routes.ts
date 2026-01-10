@@ -49,7 +49,7 @@ export const createKeyword = createRoute({
     body: {
       content: {
         "application/json": {
-          schema: insertKeywordSchema.omit({ id: true, projectId: true }),
+          schema: insertKeywordSchema.omit({ id: true, projectId: true, searches: true, visible: true, processed: true }),
         },
       },
     },
@@ -88,6 +88,31 @@ export const deleteKeyword = createRoute({
   },
 });
 
+// Marcar keyword como procesada (admin only)
+export const processKeyword = createRoute({
+  method: "post",
+  path: "/admin/keyword/{keywordId}/processed",
+  description: "Mark a keyword as fully processed (admin only)",
+  tags: ["Admin Only"],
+  request: {
+    headers: z.object({
+      Authorization: z.string().openapi({
+        param: { name: "Authorization", in: "header" },
+      }),
+    }),
+    params: z.object({
+      keywordId: z.string().transform(Number),
+    }),
+  },
+  responses: {
+    200: { description: "Keyword marked as processed" },
+    401: { description: "Unauthorized" },
+    403: { description: "Forbidden - admin role required" },
+    404: { description: "Keyword not found" },
+  },
+});
+
 export type GetKeywordsRoute = typeof getKeywords;
 export type CreateKeywordRoute = typeof createKeyword;
 export type DeleteKeywordRoute = typeof deleteKeyword;
+export type ProcessKeywordRoute = typeof processKeyword;

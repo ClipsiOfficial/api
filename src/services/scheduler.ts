@@ -1,5 +1,5 @@
 import type { Env } from "@/utils/env";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { getDB } from "@/db";
 import { keywords } from "@/db/schema";
 import { publishToQueue } from "./rabbitmq";
@@ -24,7 +24,7 @@ async function searchNews(env: Env) {
   const projects = await db.query.projects.findMany();
   for (const project of projects) {
     const topKeywords = await db.query.keywords.findMany({
-      where: kb => eq(kb.projectId, project.id),
+      where: kb => and(eq(kb.projectId, project.id), eq(kb.visible, 1)),
       orderBy: kb => [asc(kb.searches)],
       limit: 5,
     });
@@ -47,9 +47,22 @@ async function searchNews(env: Env) {
   }
 }
 
-// eslint-disable-next-line unused-imports/no-unused-vars
 async function refreshFeeds(env: Env) {
-  // TODO: Implement feed refreshing logic here
+  const db = getDB(env);
+
+  const rssFeeds = await db.query.rssAtoms.findMany();
+
+  for (const feed of rssFeeds) {
+    const projectKeywords = await db.query.keywords.findMany({
+      where: kb => eq(kb.projectId, feed.projectId),
+    });
+
+    publishToQueue(env, "rss_atom", {
+      rss_atom_id: feed.id,
+      feed_url: feed.url,
+      keywords: projectKeywords.map(kb => kb.content),
+    });
+  }
 }
 
 export default handleSchedulers;

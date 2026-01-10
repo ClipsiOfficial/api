@@ -1,4 +1,4 @@
-import type { CreateKeywordRoute, DeleteKeywordRoute, GetKeywordsRoute } from "./keywords.routes";
+import type { CreateKeywordRoute, DeleteKeywordRoute, GetKeywordsRoute, ProcessKeywordRoute } from "./keywords.routes";
 import type { AppRouteHandler } from "@/utils/types";
 import { and, eq } from "drizzle-orm";
 import { getDB } from "@/db";
@@ -112,4 +112,54 @@ export const deleteKeyword: AppRouteHandler<DeleteKeywordRoute> = async (c) => {
     .where(eq(keywords.id, keywordId));
 
   return c.json({ message: "Keyword deleted" }, 200);
+};
+
+export const processKeyword: AppRouteHandler<ProcessKeywordRoute> = async (c) => {
+  const payload = c.get("jwtPayload");
+  if (!payload)
+    return c.json({ message: "Unauthorized" }, 401);
+
+  // Check if user has admin role
+  if (payload.role !== "admin")
+    return c.json({ message: "Forbidden - admin role required" }, 403);
+
+  const db = getDB(c.env);
+  const { keywordId } = c.req.valid("param");
+
+  // Check if keyword exists and get its project
+  const keyword = await db.query.keywords.findFirst({
+    where: eq(keywords.id, keywordId),
+  });
+  if (!keyword)
+    return c.json({ message: "Keyword not found" }, 404);
+
+  const projectId = keyword.projectId;
+
+  // Mark this keyword as processed
+  await db.update(keywords)
+    .set({ processed: true })
+    .where(eq(keywords.id, keywordId));
+
+  // Check if all visible keywords in the project are now processed
+  const unprocessedKeywords = await db.query.keywords.findMany({
+    where: and(
+      eq(keywords.projectId, projectId),
+      eq(keywords.visible, 1),
+      eq(keywords.processed, false),
+    ),
+  });
+
+  // If all keywords are processed, reset them all to processed: false
+  if (unprocessedKeywords.length === 0) {
+    await db.update(keywords)
+      .set({ processed: false, searches: 0 })
+      .where(
+        and(
+          eq(keywords.projectId, projectId),
+          eq(keywords.visible, 1),
+        ),
+      );
+  }
+
+  return c.json({ message: "Keyword marked as processed" }, 200);
 };

@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "scripts": {
     "start": "wrangler dev",
+    "start:test": "wrangler dev --test-scheduled",
     "db:setup": "tsx scripts/db-setup.ts",
     "db:seed": "tsx scripts/seed.ts",
     "db:seed:prod": "NODE_ENV=production tsx scripts/seed.ts",
