@@ -102,7 +102,7 @@ export const saveNews: AppRouteHandler<SaveNewsRoute> = async (c) => {
 
 export const updateSavedNews: AppRouteHandler<UpdateSavedNewsRoute> = async (c) => {
   const id = c.req.valid("param").id;
-  const body = c.req.valid("json");
+  const bodyData = c.req.valid("json");
   const db = getDB(c.env);
   const jwt = c.get("jwtPayload");
 
@@ -141,6 +141,12 @@ export const updateSavedNews: AppRouteHandler<UpdateSavedNewsRoute> = async (c) 
       return c.json({ message: "Forbidden - You do not have access to this project" }, 403);
     }
   }
+
+  // Si summary es null, convertir a string vacío
+  const body = {
+    ...bodyData,
+    summary: bodyData.summary === null ? "" : bodyData.summary,
+  };
 
   const [updatedSavedNews] = await db.update(savedNews)
     .set(body)
@@ -292,7 +298,7 @@ export const existsNews: AppRouteHandler<ExistsNewsRoute> = async (c) => {
 };
 
 export const getSavedNews: AppRouteHandler<GetSavedNewsRoute> = async (c) => {
-  const { projectId, page, limit, search, category } = c.req.valid("query");
+  const { projectId, page, limit, search, category, sources, dateFrom, dateTo } = c.req.valid("query");
   const db = getDB(c.env);
 
   const conditions = [
@@ -309,12 +315,28 @@ export const getSavedNews: AppRouteHandler<GetSavedNewsRoute> = async (c) => {
     conditions.push(eq(savedNews.category, category));
   }
 
+  if (sources) {
+    const sourceList = sources.split(",").map(s => s.trim());
+    conditions.push(inArray(news.source, sourceList));
+  }
+
+  if (dateFrom) {
+    const fromDate = new Date(dateFrom);
+    conditions.push(sql`${news.timestamp} >= ${fromDate.getTime() / 1000}`);
+  }
+
+  if (dateTo) {
+    const toDate = new Date(dateTo);
+    toDate.setHours(23, 59, 59, 999);
+    conditions.push(sql`${news.timestamp} <= ${toDate.getTime() / 1000}`);
+  }
+
   // Count total
   const [{ count }] = await db
     .select({ count: sql<number>`count(*)` })
     .from(savedNews)
+    .innerJoin(news, eq(savedNews.sourceNewId, news.id))
     .where(and(...conditions));
-
 
   const data = await db
     .select({

@@ -1,12 +1,5 @@
 import { createRoute, z } from "@hono/zod-openapi";
-import { insertSavedNewsSchema, selectNewsSchema, selectSavedNewsSchema } from "@/db/schema";
-
-const savedNewsWithSourceSchema = selectSavedNewsSchema.extend({
-  url: z.string(),
-  timestamp: z.number(),
-  source: z.string(),
-});
-
+import { selectNewsSchema, selectSavedNewsSchema } from "@/db/schema";
 
 // Create News Route
 export const createNews = createRoute({
@@ -124,12 +117,11 @@ export const updateSavedNews = createRoute({
     body: {
       content: {
         "application/json": {
-          schema: insertSavedNewsSchema.pick({
-            title: true,
-            summary: true,
-            category: true,
-            views: true,
-          }).partial(),
+          schema: z.object({
+            title: z.string().min(1).trim().optional(),
+            summary: z.string().optional(),
+            category: z.string().nullable().optional(),
+          }),
         },
       },
     },
@@ -288,6 +280,9 @@ export const getSavedNews = createRoute({
       limit: z.string().optional().default("10").transform(v => Number(v)).openapi({ param: { name: "limit", in: "query" } }),
       search: z.string().optional().openapi({ param: { name: "search", in: "query" } }),
       category: z.string().optional().openapi({ param: { name: "category", in: "query" } }),
+      sources: z.string().optional().openapi({ param: { name: "sources", in: "query" }, description: "Comma-separated list of sources to filter by" }),
+      dateFrom: z.string().optional().openapi({ param: { name: "dateFrom", in: "query" }, description: "Filter news from this date (ISO 8601 format)" }),
+      dateTo: z.string().optional().openapi({ param: { name: "dateTo", in: "query" }, description: "Filter news until this date (ISO 8601 format)" }),
     }),
   },
   responses: {
@@ -296,7 +291,11 @@ export const getSavedNews = createRoute({
       content: {
         "application/json": {
           schema: z.object({
-            data: z.array(savedNewsWithSourceSchema),
+            data: z.array(selectSavedNewsSchema.extend({
+              url: z.string(),
+              timestamp: z.number(),
+              source: z.string(),
+            })),
             total: z.number(),
             page: z.number(),
             limit: z.number(),
