@@ -12,9 +12,9 @@ export const NewsMessageSchema = z.object({
 });
 
 export const RSSMessageSchema = z.object({
-  rss_atom_id: z.number().refine(id => id > 0, { message: "rss_atom_id must be a positive integer" }).optional(),
-  feed_url: z.url({ message: "feed_url must be a valid URL" }).optional(),
-  keywords: z.array(z.string().min(1, { message: "keyword cannot be empty" })).optional(),
+  rss_atom_id: z.number().refine(id => id > 0, { message: "rss_atom_id must be a positive integer" }),
+  feed_url: z.url({ message: "feed_url must be a valid URL" }),
+  keywords: z.array(z.string().min(1, { message: "keyword cannot be empty" })),
 });
 
 export const SearcherMessageSchema = z.object({

@@ -72,9 +72,6 @@ export const createKeyword: AppRouteHandler<CreateKeywordRoute> = async (c) => {
   const [newKeyword] = await db.insert(keywords).values({
     content: normalizedContent,
     projectId,
-    searches: 0,
-    visible: 1,
-    processed: false,
   }).returning();
 
   return c.json(newKeyword, 201);
@@ -156,7 +153,12 @@ export const processKeyword: AppRouteHandler<ProcessKeywordRoute> = async (c) =>
   if (unprocessedKeywords.length === 0) {
     await db.update(keywords)
       .set({ processed: false, searches: 0 })
-      .where(eq(keywords.projectId, projectId));
+      .where(
+        and(
+          eq(keywords.projectId, projectId),
+          eq(keywords.visible, 1),
+        ),
+      );
   }
 
   return c.json({ message: "Keyword marked as processed" }, 200);

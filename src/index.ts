@@ -66,8 +66,7 @@ export default {
   // The Hono app handles regular HTTP requests
   fetch: app.fetch,
   async scheduled(controller: ScheduledController, env: BindingsEnv, ctx: ExecutionContext) {
-    const parsed = EnvSchema.parse(env);
-    env = parsed as Env;
-    ctx.waitUntil(handleSchedulers(controller, env));
+    const validatedEnv: Env = EnvSchema.parse(env);
+    ctx.waitUntil(handleSchedulers(controller, validatedEnv));
   },
 };
