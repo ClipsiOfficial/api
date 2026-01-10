@@ -286,7 +286,7 @@ export const addMember: AppRouteHandler<AddProjectMemberRoute> = async (c) => {
 
   // Verifiy if the user is already a member
   const existing = await db.query.usersToProjects.findFirst({
-    where: eq(usersToProjects.userId, newMemberId),
+    where: and(eq(usersToProjects.userId, newMemberId), eq(usersToProjects.projectId, projectId)),
   });
   if (existing || project.ownerId === newMemberId)
     return c.json({ message: "User already a member" }, 400);
@@ -327,7 +327,7 @@ export const removeMember: AppRouteHandler<RemoveProjectMemberRoute> = async (c)
 
   // Verificar que el usuario sea miembro
   const member = await db.query.usersToProjects.findFirst({
-    where: eq(usersToProjects.userId, memberId),
+    where: and(eq(usersToProjects.userId, memberId), eq(usersToProjects.projectId, projectId)),
   });
   if (!member)
     return c.json({ message: "User not a member" }, 400);
