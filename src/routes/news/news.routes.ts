@@ -25,7 +25,7 @@ export const createNews = createRoute({
             title: z.string(),
             summary: z.string(),
             source: z.string(),
-            published_date: z.date().optional(),
+            published_date: z.coerce.date().optional(),
           }),
         },
       },

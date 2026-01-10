@@ -12,10 +12,9 @@ export const NewsMessageSchema = z.object({
 });
 
 export const RSSMessageSchema = z.object({
-  message: z.string(), // TODO: Define the structure of an RSS/Atom message
-//   kind: z.literal("parser"),
-//   content: z.string(),
-//   sourceUrl: z.string().url(),
+  rss_atom_id: z.number().refine(id => id > 0, { message: "rss_atom_id must be a positive integer" }).optional(),
+  feed_url: z.url({ message: "feed_url must be a valid URL" }).optional(),
+  keywords: z.array(z.string().min(1, { message: "keyword cannot be empty" })).optional(),
 });
 
 export const SearcherMessageSchema = z.object({
@@ -107,7 +106,7 @@ export async function publishToQueue<Q extends QueueName>(
 
   // Decide endpoint & fetch method based on environment
   const isProd = env.NODE_ENV === "production";
-  const baseURL = isProd ? "http://rabbitmq:15672" : `http://localhost:15672`;
+  const baseURL = isProd ? "http://rabbitmq:15672" : `http://127.0.0.1:15672`;
   const publishURL = `${baseURL}/api/exchanges/%2F/${encodeURIComponent(exchange)}/publish`;
 
   const requestInit: RequestInit = {
@@ -119,9 +118,16 @@ export async function publishToQueue<Q extends QueueName>(
     body: JSON.stringify(body),
   };
 
-  const response = isProd
-    ? await env.VPC_SERVICE.fetch(publishURL, requestInit)
-    : await fetch(publishURL, requestInit);
+  let response: Response;
+  try {
+    response = isProd
+      ? await env.VPC_SERVICE.fetch(publishURL, requestInit)
+      : await fetch(publishURL, requestInit);
+  }
+  catch (error) {
+    console.error(`[RabbitMQ] Error conectando a: ${publishURL}`, error);
+    throw new Error(`RabbitMQ connection failed: ${(error as Error).message}`);
+  }
 
   if (!response.ok) {
     const errorText = await response.text();

@@ -47,9 +47,22 @@ async function searchNews(env: Env) {
   }
 }
 
-// eslint-disable-next-line unused-imports/no-unused-vars
 async function refreshFeeds(env: Env) {
-  // TODO: Implement feed refreshing logic here
+  const db = getDB(env);
+
+  const rssFeeds = await db.query.rssAtoms.findMany();
+
+  for (const feed of rssFeeds) {
+    const projectKeywords = await db.query.keywords.findMany({
+      where: kb => eq(kb.projectId, feed.projectId),
+    });
+
+    publishToQueue(env, "rss_atom", {
+      rss_atom_id: feed.id,
+      feed_url: feed.url,
+      keywords: projectKeywords.map(kb => kb.content),
+    });
+  }
 }
 
 export default handleSchedulers;
