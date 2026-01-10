@@ -22,7 +22,7 @@ export const SearcherMessageSchema = z.object({
   topic: z.string().min(1, { message: "topic cannot be empty" }),
   keyword_id: z.number().refine(id => id > 0, { message: "keyword_id must be a positive integer" }),
   keyword: z.string().min(1, { message: "keyword cannot be empty" }),
-  searches: z.number().refine(count => count > 0, { message: "searches must be a positive integer" }).default(0),
+  searches: z.number().refine(count => count >= 0, { message: "searches must be a non-negative integer" }).default(0),
 });
 
 // Map queue name to its schema so we validate against the specific queue schema
