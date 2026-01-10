@@ -6,11 +6,11 @@ import { publishToQueue } from "./rabbitmq";
 
 async function handleSchedulers(controller: ScheduledController, env: Env) {
   switch (controller.cron) {
-    case "0 9 * * *": // Every day at 9 AM
-      await refreshFeeds(env);
-      break;
-    case "0 * * * *": // Every hour
+    case "0 9 * * *": // Every day at 9 AM [searcher task]
       await searchNews(env);
+      break;
+    case "0 * * * *": // Every hour [feed fetcher task]
+      await refreshFeeds(env);
       break;
     default:
       console.warn(`No scheduler found for controller: ${controller}`);
