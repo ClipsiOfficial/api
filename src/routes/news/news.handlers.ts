@@ -298,7 +298,7 @@ export const existsNews: AppRouteHandler<ExistsNewsRoute> = async (c) => {
 };
 
 export const getSavedNews: AppRouteHandler<GetSavedNewsRoute> = async (c) => {
-  const { projectId, page, limit, search, category, sources, dateFrom, dateTo } = c.req.valid("query");
+  const { projectId, page, limit, search, categories, sources, dateFrom, dateTo } = c.req.valid("query");
   const db = getDB(c.env);
 
   const conditions = [
@@ -311,8 +311,11 @@ export const getSavedNews: AppRouteHandler<GetSavedNewsRoute> = async (c) => {
     );
   }
 
-  if (category) {
-    conditions.push(eq(savedNews.category, category));
+  if (categories) {
+    const categoryList = categories.split(",").map(s => s.trim()).filter(Boolean);
+    if (categoryList.length > 0) {
+      conditions.push(inArray(savedNews.category, categoryList));
+    }
   }
 
   if (sources) {
@@ -322,11 +325,17 @@ export const getSavedNews: AppRouteHandler<GetSavedNewsRoute> = async (c) => {
 
   if (dateFrom) {
     const fromDate = new Date(dateFrom);
+    if (Number.isNaN(fromDate.getTime())) {
+      return c.json({ message: "Invalid dateFrom" }, 400);
+    }
     conditions.push(sql`${news.timestamp} >= ${fromDate.getTime() / 1000}`);
   }
 
   if (dateTo) {
     const toDate = new Date(dateTo);
+    if (Number.isNaN(toDate.getTime())) {
+      return c.json({ message: "Invalid dateTo" }, 400);
+    }
     toDate.setHours(23, 59, 59, 999);
     conditions.push(sql`${news.timestamp} <= ${toDate.getTime() / 1000}`);
   }
