@@ -339,5 +339,5 @@ export const removeMember: AppRouteHandler<RemoveProjectMemberRoute> = async (c)
       eq(usersToProjects.projectId, projectId),
     ));
 
-  return c.json("Member removed succesfuly", 200);
+  return c.json("Member removed successfully", 200);
 };
