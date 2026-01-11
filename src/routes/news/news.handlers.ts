@@ -268,17 +268,20 @@ export const getNewsSources: AppRouteHandler<GetNewsSourcesRoute> = async (c) =>
 
   const keywordIds = projectKeywords.map(k => k.id);
 
-  // 2. Get all unique sources for the project
-  const uniqueSources = await db
-    .selectDistinct({ source: news.source })
+  // 2. Get sources ordered by count of news
+  const sourcesWithCount = await db
+    .select({
+      source: news.source,
+      count: sql<number>`count(${news.id})`,
+    })
     .from(news)
     .innerJoin(keywordsToNews, eq(news.id, keywordsToNews.newsId))
-    .where(inArray(keywordsToNews.keywordId, keywordIds));
+    .where(inArray(keywordsToNews.keywordId, keywordIds))
+    .groupBy(news.source)
+    .orderBy(desc(sql`count(${news.id})`));
 
-  // 3. Sort alphabetically
-  const sources = uniqueSources
-    .map(item => item.source)
-    .sort((a, b) => a.localeCompare(b));
+  // 3. Map to array of strings
+  const sources = sourcesWithCount.map(item => item.source);
 
   return c.json({ sources });
 };
