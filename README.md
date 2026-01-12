@@ -15,7 +15,7 @@ cd api
 pnpm install
 
 # Ejecución
-pnpm dev
+pnpm start
 ```
 
 ## Linter (ESLint)
@@ -75,7 +75,10 @@ Advertencias y diferencias entre dev y prod:
   - En dev puedes habilitar source maps para debugging (`pnpm dev:debug`).
   - En producción los source maps están desactivados por defecto por razones de seguridad. No publiques source maps de producción.
 
-### Buenas prácticas
+## Equipo
 
-- Siempre revisa las migraciones antes de hacer `push` a producción.
-- Si usas Drizzle Studio apuntando a producción, ten cuidado con las acciones que modifican datos.
+El equipo esta compuesto por:
+- Ariadna Mantilla
+- Eulalia Peiret
+- Ivan Moreno
+- Laura Apolzan
